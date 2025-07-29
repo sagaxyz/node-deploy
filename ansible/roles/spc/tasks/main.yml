@@ -1,0 +1,3 @@
+- name: Deploy SPC
+  debug:
+    msg: I'm deploying SPC ({{ spc_chain_id }})

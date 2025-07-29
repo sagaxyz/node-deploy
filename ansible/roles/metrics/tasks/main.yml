@@ -1,0 +1,3 @@
+- name: Deploy Kube Prometheus Stack
+  debug:
+    msg: I'm deploying Kube Prometheus

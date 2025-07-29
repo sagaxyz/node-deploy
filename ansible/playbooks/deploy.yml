@@ -1,0 +1,18 @@
+- name: Deploy Saga Pegasus stack
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - "{{ playbook_dir }}/../group_vars/all.yml"
+    - "{{ playbook_dir }}/../group_vars/{{ env }}.yml"
+  
+  pre_tasks:
+    - name: Fail if env or mode is missing
+      fail:
+        msg: "'env' and 'mode' must be provided"
+      when: env is not defined or mode is not defined
+
+  roles:
+    - { role: spc, tags: [spc] }
+    - { role: metrics, tags: [metrics] }
