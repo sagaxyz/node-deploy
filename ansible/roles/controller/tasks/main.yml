@@ -1,0 +1,40 @@
+- name: Create deployment directory
+  file:
+    path: ~/.ansible/deployments/{{ env }}
+    state: directory
+    mode: '0744'
+
+- name: Generate Controller Namespace
+  template:
+    src: controller-ns.j2
+    dest: ~/.ansible/deployments/{{ env }}/controller-ns.yml
+    mode: '0644'
+
+- name: Generate Controller Deployment
+  template:
+    src: controller-deployment.j2
+    dest: ~/.ansible/deployments/{{ env }}/controller-deployment.yml
+    mode: '0644'
+
+- name: Generate Controller Service
+  template:
+    src: controller-service.j2
+    dest: ~/.ansible/deployments/{{ env }}/controller-service.yml
+    mode: '0644'
+
+- name: Generate Controller Config
+  template:
+    src: controller-config.j2
+    dest: ~/.ansible/deployments/{{ env }}/controller-config.yml
+    mode: '0644'
+
+- name: Apply Controller manifests
+  kubernetes.core.k8s:
+    state: present
+    src: ~/.ansible/deployments/{{ env }}/{{ item }}
+  loop:
+    - controller-ns.yml
+    - controller-config.yml
+    - controller-deployment.yml
+    - controller-service.yml
+  when: mode == "validator" 

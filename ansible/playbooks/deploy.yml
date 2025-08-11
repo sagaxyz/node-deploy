@@ -15,4 +15,5 @@
 
   roles:
     - { role: spc, tags: [spc] }
+    - { role: controller, tags: [controller] }
     - { role: metrics, tags: [metrics] }

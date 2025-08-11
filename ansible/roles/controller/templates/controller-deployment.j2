@@ -1,0 +1,79 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: "saga-controller-role"
+rules:
+  - apiGroups: ["", "apps", "networking.k8s.io"]
+    resources: ["namespaces", "services", "pods", "deployments", "deployments/scale", "statefulsets", "persistentvolumeclaims", "ingresses", "configmaps", "serviceaccounts"]
+    verbs: ["get", "list", "update", "watch", "delete", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: "saga-controller-role-binding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "saga-controller-role"
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: sagasrv-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "saga-controller"
+  namespace: sagasrv-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: controller
+  template:
+    metadata:
+      labels:
+        app: controller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9000"
+    spec:
+      containers:
+        - image: {{ controller_image | default('sagaxyz/controller:latest') }}
+          name: controller
+          env:
+          - name: UID
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.uid
+          - name: CHAIN_ID
+            value: "{{ spc_chain_id }}"
+          ports:
+            - containerPort: 19090
+            - containerPort: 18090
+            - containerPort: 9000
+          volumeMounts:
+          - name: "controller-config"
+            mountPath: "/etc/saga/controller"
+          - name: "controller-config-kube"
+            mountPath: "/etc/saga/controller/kube"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
+      volumes:
+      - name: "controller-config"
+        configMap:
+          name: "controller-config"
+      - name: "controller-config-kube"
+        configMap:
+          name: "controller-config-kube"
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always 

@@ -1,0 +1,15 @@
+# Controller deployment variables
+controller_image: "sagaxyz/controller:latest"
+controller_namespace: "sagasrv-controller"
+controller_replicas: 1
+
+# Resource limits
+controller_memory_request: "2Gi"
+controller_memory_limit: "4Gi"
+controller_cpu_request: "1"
+controller_cpu_limit: "2"
+
+# Ports
+controller_http_port: 19090
+controller_grpc_port: 18090
+controller_metrics_port: 9000 

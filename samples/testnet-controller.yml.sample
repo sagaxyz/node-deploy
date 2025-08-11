@@ -1,0 +1,3 @@
+env: testnet
+mode: validator
+controller_image: "sagaxyz/controller:0.10.0-alpha.2" 

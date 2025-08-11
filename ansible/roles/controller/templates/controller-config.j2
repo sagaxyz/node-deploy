@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-config
+  namespace: sagasrv-controller
+data:
+  config.yaml: |
+    chain_id: "{{ spc_chain_id }}"
+    log_level: "info"
+    metrics_enabled: true
+    metrics_port: 9000
+    http_port: 19090
+    grpc_port: 18090
+    kube_config_path: "/etc/saga/controller/kube"
+    controller_namespace: "sagasrv-controller" 
