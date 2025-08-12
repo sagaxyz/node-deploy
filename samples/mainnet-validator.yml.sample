@@ -1,2 +1,3 @@
-env: mainnet
+network: mainnet
 mode: validator
+moniker: myvalidator

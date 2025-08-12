@@ -3,15 +3,31 @@
   connection: local
   gather_facts: false
 
+  vars:
+    supported_networks:
+      - mainnet
+      - testnet
+      - staging
+    supported_modes:
+      - validator
+      - fullnode
+      - service-provider
+
   vars_files:
     - "{{ playbook_dir }}/../group_vars/all.yml"
-    - "{{ playbook_dir }}/../group_vars/{{ env }}.yml"
+    - "{{ playbook_dir }}/../group_vars/network/{{ network }}.yml"
+    - "{{ playbook_dir }}/../group_vars/mode/{{ mode }}.yml"
   
   pre_tasks:
-    - name: Fail if env or mode is missing
+    - name: Validate network parameter
       fail:
-        msg: "'env' and 'mode' must be provided"
-      when: env is not defined or mode is not defined
+        msg: "Invalid or missing 'network'. Must be one of: {{ supported_networks | join(', ') }}"
+      when: network is not defined or network not in supported_networks
+
+    - name: Validate mode parameter
+      fail:
+        msg: "Invalid or missing 'mode'. Must be one of: {{ supported_modes | join(', ') }}"
+      when: mode is not defined or mode not in supported_modes
 
   roles:
     - { role: spc, tags: [spc] }

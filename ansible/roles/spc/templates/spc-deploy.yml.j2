@@ -1,0 +1,179 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sagasrv-spc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spc-pvc
+  namespace: sagasrv-spc
+  labels:
+    app: spc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: "{{ spc_volume_size }}"
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: spc
+  namespace: sagasrv-spc
+  labels:
+    app: spc
+spec:
+  selector:
+    matchLabels:
+      app: spc
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: spc
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "26660"
+    spec:
+      containers:
+        - image: "{{ spc_image }}"
+          name: spc
+          env:
+          - name: KEYNAME
+            value: "{{ moniker }}"
+          - name: CHAINID
+            value: "{{ spc_chain_id }}"
+          - name: MONIKER
+            value: "{{ moniker }}"
+          - name: LOGLEVEL
+            value: "{{ loglevel }}"
+          - name: TRACE
+            value: "{{ trace | default(' ') }}"
+          - name: EXTERNAL_ADDRESS
+            value: "{{ spc_external_address }}"
+          - name: S3BUCKET
+            value: "{{ spc_s3_gentx_uri }}"
+          - name: QUORUM_COUNT
+            value: "{{ quorum_count }}"
+          - name: VALIDATOR_ADDRESSES
+            value: "{{ validator_addresses }}"
+          - name: VALIDATOR_PROVIDER
+            value: "{{ validator_provider }}"
+          - name: ADDITIONAL_ARGS
+            value: "{{ spc_additional_args }}"
+          - name: KEYPASSWD
+            value: "{{ keychain_password }}"
+          - name: PRUNING_STRATEGY
+            value: {{ pruning_strategy }}
+          - name: STAKE_OWNER_ADDRESS
+            value: {{ stake_owner_address }}
+          - name: FOUNDATION_WALLET_ADDRESS
+            value: {{ foundation_wallet_address }}
+          - name: STAKE_AMOUNT
+            value: "{{ stake_amount }}"
+          - name: STAKING_FEES
+            value: "{{ staking_fees }}"
+          - name: AWS_ACCESS_KEY_ID
+            value: "{{ aws_access_key_id }}"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "{{ aws_secret_access_key }}"
+{% if spc_peers is defined %}
+          - name: PEERS
+            value: {{ spc_peers }}
+{% endif %}
+{% if validator_provider == 1 %}
+          - name: VALIDATOR_MNEMONIC
+            value: {{ validator_mnemonic }}
+{% endif %}
+{% if voting_period is defined %}
+          - name: VOTING_PERIOD
+            value: {{ voting_period }}
+{% endif %}
+{% if snapshot_enabled %}
+          - name: SNAPSHOT_INTERVAL
+            value: "{{ snapshot_interval }}"
+          - name: SNAPSHOT_KEEP_RECENT
+            value: "{{ snapshot_keep_recent }}"
+{% endif %}
+{% if statesync_enabled %}
+          - name: SNAPSHOT_TRUST_INTERVAL
+            value: "{{ statesync_trust_interval }}"
+          - name: SYNC_RPC
+            value: "{% for domain in statesync_rpc_domains %}https://spc.{{ domain }}:443{% if not loop.last %},{% endif %}{% endfor %}"
+          - name: NODE_RPC
+            value: https://spc.{{ statesync_rpc_domains[0] }}:443
+{% endif %}
+          resources:
+            requests:
+              memory: "6Gi"
+              cpu: "1"
+            limits:
+              memory: "12Gi"
+              cpu: "2"
+          ports:
+            - name: tmint-rpc-1
+              containerPort: 26656
+            - name: tmint-rpc-2
+              containerPort: 26657
+            - name: http
+              containerPort: 1317
+            - name: grpc
+              containerPort: 9090
+            - name: metrics
+              containerPort: 26660
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - spcd status | jq -r '(.SyncInfo // .sync_info) | .catching_up' | grep false
+          volumeMounts:
+          - name: spc-pvc
+            mountPath: /root/.spc
+      volumes:
+      - name: spc-pvc
+        persistentVolumeClaim:
+          claimName: spc-pvc
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spc-internal
+  namespace: sagasrv-spc
+  labels:
+    app: spc
+spec:
+  type: ClusterIP
+  selector:
+    app: spc
+  ports:
+    - name: tmint-rpc-1
+      protocol: TCP
+      targetPort: 26656
+      port: 26656
+    - name: tmint-rpc-2
+      protocol: TCP
+      targetPort: 26657
+      port: 26657
+    - name: http
+      protocol: TCP
+      targetPort: 1317
+      port: 1317
+    - name: grpc
+      protocol: TCP
+      targetPort: 9090
+      port: 9090
+    - name: tmint-rpc-2-over-https
+      protocol: TCP
+      targetPort: 26657
+      port: 443
+    - name: tmint-rpc-2-over-http
+      protocol: TCP
+      targetPort: 26657
+      port: 80
