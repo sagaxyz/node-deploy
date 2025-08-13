@@ -1,3 +1,5 @@
 - name: Deploy SPC
-  debug:
-    msg: I'm deploying SPC ({{ spc_chain_id }})
+  kubernetes.core.k8s:
+    state: present
+    template: templates/spc-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"

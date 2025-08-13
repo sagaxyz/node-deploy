@@ -1,0 +1,15 @@
+# Chains config (spc and chainlets)
+spc_chain_id: spc-1
+spc_volume_size: 200Gi
+spc_peers: "1b10864a39dab62a73f4e669951138398eae4e76@spc.spsrv1.sagarpc.io:26656,fd262927112b698f848abf737d0a6370d1b09db3@spc.spsrv2.sagarpc.io:26656"
+s3_bucket: s3://mainnet-prod
+quorum_count: 4
+validator_addresses: saga1pdf6slnws5hqeg0wz5t4snrfzyx7wg7fra84q3 saga1954vr9dlykxxtmazesz3llntmdz7pn0ep07x6v saga1dque6vr4lzlkl0uqn6v6tdxys5g466jphah7d4 saga18u6dnjzd2gzh5fgprtwvx9adfwwn99qc6tagnh
+stake_owner_address: saga1k70m2ms8kyta5749nz2t77ts0xt6229qcle9jg
+foundation_wallet_address: saga1u2a8ktctqhpx655ysw7ru27t6hqt9wlq4fn5ca
+is_testnet: false
+
+# StateSync
+statesync_rpc_domains:
+  - spsrv1.sagarpc.io
+  - spsrv2.sagarpc.io
