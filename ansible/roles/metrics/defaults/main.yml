@@ -1,0 +1,18 @@
+# Shared configuration
+metrics_namespace: sagasrv-metrics
+metrics_kps_chart_version: "76.4.0"
+
+# Grafana configuration
+metrics_grafana_enabled: true
+metrics_grafana_service_type: ClusterIP
+metrics_grafana_ingress_enabled: false
+metrics_grafana_password: admin
+
+# Prometheus configuration
+metrics_prometheus_retention: 15d
+metrics_prometheus_scrape_interval: 30s
+metrics_prometheus_storage_class: saga-default
+metrics_prometheus_storage_size: 10Gi
+
+# Alertmanager configuration
+metrics_alertmanager_enabled: true
