@@ -48,7 +48,6 @@ spec:
             limits:
               memory: "2Gi"
           imagePullPolicy: Always
-          name: relayer
           command: ["bash", "-c", "echo Waiting $CHANNEL_WAIT_TIME && sleep $CHANNEL_WAIT_TIME && ./start.sh"]
           env:
             - name: KEYPASSWD
