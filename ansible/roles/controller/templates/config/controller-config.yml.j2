@@ -1,0 +1,57 @@
+loglevel: "trace"
+json_log_file: ""
+listen_grpc: ":19090"
+listen_grpc_gateway: ":18090"
+listen_prometheus: ":9000"
+sync_frequency: "5s"
+spc:
+  grpc_endpoint: "spc-internal.sagasrv-spc.svc.cluster.local:9090"
+  state_request_timeout: "10s"
+  state_reload: "5s"
+deployment:
+  deployer: "kube"
+  state_reload: "10s"
+  state_request_timeout: "30s"
+  deploy_timeout: "10m"
+  deploy_parallel: 8
+  kube:
+    enable_load_balancer: false
+    in_cluster_config: true
+    config_path: "/etc/saga/kube/config"
+    template_path: "/etc/saga/controller/kube/chainlet.yml.tmpl"
+    lb_template_path: "/etc/saga/controller/kube/chainlet.yml.tmpl"
+    pod_running_timeout: "300s"
+    service_external_ip_timeout: "300s"
+    chainlet_host_resolution_timeout: "300s"
+    config_map_key_commit_timeout: "300s"
+    node_deployment_name: "chainlet"
+    namespace_prefix: "saga-"
+    namespace_deletion_timeout: "300s"
+    namespace_pod_timeout: "300s"
+    qps: 100
+    throttling_burst: 200
+    lb_port_limit: 25
+    deployments: {{ controller_chainlet_deployment_list }}
+    ports:
+      "rpc":
+        number: 26657
+        host_suffix: ""
+      "jsonrpc":
+        number: 8545
+        host_suffix: ""
+      "ws":
+        number: 8546
+        host_suffix: ""
+    env:
+      validator_mnemonic: "{{ validator_mnemonic | default('void') }}"
+      s3bucket: "{{ s3_bucket }}/chainlets/gentx"
+      validator_provider: "{{ validator_provider }}"
+      moniker: "{{ moniker }}"
+      dev_addresses_cosmos: ""
+      dev_addresses_eth: ""
+      json_rpc_gas_cap: "50000000"
+      pruning_strategy: "{{ pruning_strategy | default('') }}"
+    explorer:
+      enabled: "false"
+    relayer:
+      enabled: "{{ controller_relayer_enabled }}"

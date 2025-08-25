@@ -1,0 +1,25 @@
+# Controller config
+controller_version: "0.10.1"
+controller_image: "sagaxyz/controller:{{ controller_version }}"
+controller_resources:
+  requests:
+    memory: "2Gi"
+    cpu: "1"
+  limits:
+    memory: "4Gi"
+    cpu: "2"
+chainlet_template_dest: "/tmp/chainlet.yml.tmpl"
+
+# Chainlet vars
+controller_chainlet_resources:
+  requests:
+    memory: "1Gi"
+    cpu: "0.5"
+  limits:
+    memory: "4Gi"
+    cpu: "2"
+
+# Relayer vars
+controller_relayer_enabled: false
+controller_relayer_version: "0.4.2"
+controller_channel_wait_time: "0"

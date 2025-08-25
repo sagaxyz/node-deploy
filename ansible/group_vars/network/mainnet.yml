@@ -8,8 +8,16 @@ validator_addresses: saga1pdf6slnws5hqeg0wz5t4snrfzyx7wg7fra84q3 saga1954vr9dlyk
 stake_owner_address: saga1k70m2ms8kyta5749nz2t77ts0xt6229qcle9jg
 foundation_wallet_address: saga1u2a8ktctqhpx655ysw7ru27t6hqt9wlq4fn5ca
 is_testnet: false
+controller_chainlet_pvc_size: "100Gi"
 
 # StateSync
 statesync_rpc_domains:
   - spsrv1.sagarpc.io
   - spsrv2.sagarpc.io
+
+# SSC
+ssc:
+  chain_id: "ssc-1"
+  denom: "usaga"
+  rpc: "https://ssc-rpc.sagarpc.io:443"
+  consumer_gas_price: "0.01"

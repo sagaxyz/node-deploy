@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chainlet
+  namespace: "{{ .Namespace }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: chainlet
+  ports:
+    - name: tendermintrpc
+      port: 26657
+      targetPort: 26657
+    - name: tendermintrpc-p2p
+      port: 26656
+      targetPort: 26656
+    - name: cosmosgrpc
+      port: 9090
+      targetPort: 9090
+    - name: tendermintlcd
+      port: 1317
+      targetPort: 1317
+    - name: evmjsonrpc
+      port: 8545
+      targetPort: 8545
+    - name: evmws
+      port: 8546
+      targetPort: 8546
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chainlet-pvc
+  namespace: "{{ .Namespace }}"
+  labels:
+    app: chainlet
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: "%%% controller_chainlet_pvc_size %%%"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chainlet
+  namespace: "{{ .Namespace }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chainlet
+  template:
+    metadata:
+      labels:
+        app: chainlet
+        chainId: "{{ .ChainId }}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "26660"
+        saga.xyz/stack-version: "{{ .ChainletStackVersion }}"
+        saga.xyz/stack-name: "{{ .ChainletStackName }}"
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: "{{ .ChainletImage }}"
+          name: chainlet
+          imagePullPolicy: Always
+          env:
+          - name: CHAINID
+            value: "{{ .ChainId }}"
+          - name: LOGLEVEL
+            value: "info"
+          - name: KEYNAME
+            value: "chainlet-operator-key"
+          - name: EXTERNAL_ADDRESS
+            value: "{{ .ChainletExternalAddress }}"
+          - name: MAINTAINERS
+            value: "{{ .ChainletMaintainers }}"
+          - name: VALIDATOR_ADDRESSES_COSMOS
+            value: "{{ .ChainletValidators }}"
+          - name: STAKE_OWNER_ADDRESS
+            value: "%%% stake_owner_address %%%"
+          - name: KEYPASSWD
+            value: "%%% keychain_password %%%"
+          - name: AWS_ACCESS_KEY_ID
+            value: "%%% aws_access_key_id %%%"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "%%% aws_secret_access_key %%%"
+{% if voting_period is defined %}
+          - name: VOTING_PERIOD
+            value: "%%% voting_period %%%"
+{% endif %}
+{% if snapshot_enabled %}
+          - name: SNAPSHOT_INTERVAL
+            value: "%%% snapshot_interval %%%"
+          - name: SNAPSHOT_KEEP_RECENT
+            value: "%%% snapshot_keep_recent %%%"
+{% endif %}
+{% if statesync_enabled %}
+          - name: SNAPSHOT_TRUST_INTERVAL
+            value: "%%% statesync_trust_interval %%%"
+          - name: SYNC_RPC
+            value: "{% for domain in statesync_rpc_domains %}https://{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% domain %%%:443{% if not loop.last %},{% endif %}{% endfor %}"
+          - name: NODE_RPC
+            value: "https://{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% statesync_rpc_domains[0] %%%:443"
+{% endif %}
+{% if stake_amount is defined %}
+          - name: STAKE_AMOUNT
+            value: "%%% stake_amount %%%"
+{% endif %}
+{% if staking_fees is defined %}
+          - name: STAKING_FEES
+            value: "%%% staking_fees %%%"
+{% endif %}
+{{ range $key, $value := .ChainletEnvVars }}
+          - name: {{ $key | ToUpper }}
+            value: "{{ $value }}"
+{{ end }}
+{{ range $key, $value := .ChainletSpcVars }}
+          - name: SPCPARAM_{{ $key | ToUpper }}
+            value: "{{ $value }}"
+{{ end }}
+          ports:
+            - containerPort: 26657
+            - containerPort: 26656
+            - containerPort: 9090
+            - containerPort: 1317
+            - containerPort: 8545
+            - containerPort: 8546
+            - containerPort: 26660
+          resources:
+            %%% controller_chainlet_resources | to_nice_yaml(indent=2) | indent(12, true) | trim %%%
+          volumeMounts:
+            - name: chainlet-volume
+              mountPath: "/root/.sagaosd"
+              subPath: sagaosd
+      volumes:
+        - name: "chainlet-volume"
+          persistentVolumeClaim:
+            claimName: chainlet-pvc

@@ -1,0 +1,102 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: relayer
+  namespace: "{{ .Namespace }}"
+  labels:
+    app: relayer
+spec:
+  type: ClusterIP
+  selector:
+    app: "relayer"
+  ports:
+    - targetPort: 5183
+      port: 5183
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "relayer"
+  namespace: "{{ .Namespace }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: "relayer"
+  template:
+    metadata:
+      labels:
+        app: "relayer"
+        chainId: "{{ .ChainId }}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5183"
+        prometheus.io/path: "/relayer/metrics"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      containers:
+        - name: relayer
+          image: sagaxyz/controller-relayer:%%% controller_relayer_version %%%
+          resources:
+            requests:
+              memory: "1Gi"
+            limits:
+              memory: "2Gi"
+          imagePullPolicy: Always
+          name: relayer
+          command: ["bash", "-c", "echo Waiting $CHANNEL_WAIT_TIME && sleep $CHANNEL_WAIT_TIME && ./start.sh"]
+          env:
+            - name: KEYPASSWD
+              value: "%%% keychain_password %%%"
+            - name: CCV
+              value: "false"
+            - name: CHANNEL_WAIT_TIME
+              value: "%%% channel_wait_time %%%"
+            - name: HUB
+              value: "true"
+{{ if $isHub }}
+            - name: CONSUMER_CHAIN_ID
+              value: "%%% ssc.chain_id %%%"
+            - name: CONSUMER_DENOM
+              value: "%%% ssc.denom %%%"
+            - name: CONSUMER_RPC
+              value: "%%% ssc.rpc %%%"
+            - name: CONSUMER_CREATE_ACCOUNT
+              value: "false"
+            - name: CONSUMER_GAS_PRICE
+              value: "%%% ssc.consumer_gas_price %%%"
+            - name: CONSUMER_GRPC
+              value: "%%% ssc.grpc %%%"
+            - name: CONSUMER_WS
+              value: "wss://%%% ssc.rpc | regex_replace('^(http|https)://', '') %%%/websocket"
+{{ else }}
+            - name: CONSUMER_CHAIN_ID
+              value: "{{ .ChainId }}"
+            - name: CONSUMER_DENOM
+              value: "{{ .CoinDenom }}"
+            - name: CONSUMER_RPC
+              value: "http://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:26657"
+            - name: CONSUMER_GRPC
+              value: "http://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:9090"
+            - name: CONSUMER_WS
+              value: "ws://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:26657/websocket"
+{{ end }}
+            - name: CONSUMER_MNEMONIC
+              value: "%%% validator_mnemonic %%%"
+            - name: HUB_CHAIN_ID
+              value: "{{ .HubChainId }}"
+            - name: HUB_DENOM
+              value: "{{ .HubDenom }}"
+            - name: HUB_RPC
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657"
+            - name: HUB_API
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:1317"
+            - name: HUB_MNEMONIC
+              value: "%%% validator_mnemonic %%%"
+          ports:
+            - containerPort: 5183

@@ -4,3 +4,10 @@ spc_image: sagaxyz/spc:{{ spc_version }}
 spc_external_address: "127.0.0.1"
 spc_additional_args: ""
 spc_s3_gentx_uri: "{{ s3_bucket }}/spc/gentx"
+spc_resources:
+  requests:
+    memory: "6Gi"
+    cpu: "1"
+  limits:
+    memory: "12Gi"
+    cpu: "2"

@@ -106,13 +106,7 @@ spec:
           - name: NODE_RPC
             value: https://spc.{{ statesync_rpc_domains[0] }}:443
 {% endif %}
-          resources:
-            requests:
-              memory: "6Gi"
-              cpu: "1"
-            limits:
-              memory: "12Gi"
-              cpu: "2"
+          resources: {{ spc_resources }}
           ports:
             - name: tmint-rpc-1
               containerPort: 26656
