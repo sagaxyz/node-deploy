@@ -8,8 +8,16 @@ validator_addresses: saga10h0ngnu5cz0e2v5k6pdz2l5xhl3edhnlqvrdd2 saga1uhuu689scj
 stake_owner_address: saga1z3q8z0k6ygzs8krcd4u3s6ewa8de8nr645hh0l
 foundation_wallet_address: saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2
 is_testnet: true
+controller_chainlet_pvc_size: "50Gi"
 
 # StateSync
 statesync_rpc_domains:
   - staging-srv.sagarpc.io
   - staging1.sagarpc.io
+
+# SSC
+ssc:
+  chain_id: "ssc-staging-1"
+  denom: "utsaga"
+  rpc: "http://34.9.0.15:26657"
+  consumer_gas_price: "0.01"

@@ -32,3 +32,4 @@
   roles:
     - { role: spc, tags: [spc] }
     - { role: metrics, tags: [metrics] }
+    - { role: controller, tags: [controller] }

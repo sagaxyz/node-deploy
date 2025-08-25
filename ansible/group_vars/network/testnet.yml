@@ -7,8 +7,17 @@ validator_addresses: saga1atjuvcf4aq3upr5eacacpv08lkp39v8208gw6z saga12uch6j240e
 stake_owner_address: saga162k9aqdgagr6qwjugqaktfycaechhnpzgl3rgs
 foundation_wallet_address: saga1u2a8ktctqhpx655ysw7ru27t6hqt9wlq4fn5ca
 is_testnet: true
+controller_chainlet_pvc_size: "50Gi"
 
 # StateSync
-sync_rpc_domains:
+statesync_rpc_domains:
   - st1.sagarpc.io
   - stsrv1.sagarpc.io
+
+# SSC
+ssc:
+  chain_id: "ssc-testnet-3"
+  denom: "utsaga"
+  rpc: "https://testnet2-keplr.sagarpc.io:443"
+  consumer_gas_price: "0.01"
+  grpc: "https://testnet2-grpc.sagarpc.io:9090"

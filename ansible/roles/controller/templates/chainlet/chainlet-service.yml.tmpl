@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chainlet
+  namespace: "{{ .Namespace }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: chainlet
+  ports:
+    - name: tendermintrpc
+      port: 26657
+      targetPort: 26657
+    - name: tendermintrpc-p2p
+      port: 26656
+      targetPort: 26656
+    - name: cosmosgrpc
+      port: 9090
+      targetPort: 9090
+    - name: tendermintlcd
+      port: 1317
+      targetPort: 1317
+    - name: evmjsonrpc
+      port: 8545
+      targetPort: 8545
+    - name: evmws
+      port: 8546
+      targetPort: 8546
