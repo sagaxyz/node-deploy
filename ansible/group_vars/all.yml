@@ -8,7 +8,6 @@ pruning_strategy: default
 stake_amount: 1500000
 staking_fees: 100000
 expose_p2p: true
-spc_p2p_external_port: 49151
 
 # Snapshots
 snapshot_interval: 1000

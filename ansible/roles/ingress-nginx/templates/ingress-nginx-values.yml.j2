@@ -9,6 +9,11 @@ controller:
     serviceMonitor:
       enabled: {{ ingress_nginx_metrics_service_monitor_enabled | lower }}
 
+  enableHttp: false
+  enableHttps: false
+  service:
+    type: ClusterIP
+
 {% if expose_p2p or ingress_nginx_controller_additional_args | length > 0 %}
   extraArgs:
 {% if expose_p2p %}
