@@ -5,7 +5,7 @@ listen_grpc_gateway: ":18090"
 listen_prometheus: ":9000"
 sync_frequency: "5s"
 spc:
-  grpc_endpoint: "spc-internal.sagasrv-spc.svc.cluster.local:9090"
+  grpc_endpoint: "spc.sagasrv-spc.svc.cluster.local:9090"
   state_request_timeout: "10s"
   state_reload: "5s"
 deployment:
@@ -15,11 +15,11 @@ deployment:
   deploy_timeout: "10m"
   deploy_parallel: 8
   kube:
-    enable_load_balancer: false
+    enable_load_balancer: {{ expose_p2p }}
     in_cluster_config: true
     config_path: "/etc/saga/kube/config"
     template_path: "/etc/saga/controller/kube/chainlet.yml.tmpl"
-    lb_template_path: "/etc/saga/controller/kube/chainlet.yml.tmpl"
+    lb_template_path: "/etc/saga/controller/kube/lb.yml.tmpl"
     pod_running_timeout: "300s"
     service_external_ip_timeout: "300s"
     chainlet_host_resolution_timeout: "300s"
@@ -30,7 +30,7 @@ deployment:
     namespace_pod_timeout: "300s"
     qps: 100
     throttling_burst: 200
-    lb_port_limit: 25
+    lb_port_limit: {{ controller_lb_port_limit }}
     deployments: {{ controller_chainlet_deployment_list }}
     ports:
       "rpc":
