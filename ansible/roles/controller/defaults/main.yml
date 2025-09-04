@@ -1,5 +1,5 @@
 # Controller config
-controller_version: "0.10.1"
+controller_version: "0.10.2-alpha.2"
 controller_image: "sagaxyz/controller:{{ controller_version }}"
 controller_resources:
   requests:
@@ -9,6 +9,7 @@ controller_resources:
     memory: "4Gi"
     cpu: "2"
 chainlet_template_dest: "/tmp/chainlet.yml.tmpl"
+controller_lb_port_limit: 1000
 
 # Chainlet vars
 controller_chainlet_resources:

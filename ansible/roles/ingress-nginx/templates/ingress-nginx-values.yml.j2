@@ -1,0 +1,50 @@
+controller:
+  replicaCount: {{ ingress_nginx_controller_replicas }}
+  
+  resources:
+{{ ingress_nginx_controller_resources | to_nice_yaml | indent(4, true) }}
+
+  metrics:
+    enabled: {{ ingress_nginx_metrics_enabled | lower }}
+    serviceMonitor:
+      enabled: {{ ingress_nginx_metrics_service_monitor_enabled | lower }}
+
+  enableHttp: false
+  enableHttps: false
+  service:
+    type: ClusterIP
+
+{% if expose_p2p or ingress_nginx_controller_additional_args | length > 0 %}
+  extraArgs:
+{% if expose_p2p %}
+    tcp-services-configmap: $(POD_NAMESPACE)/tcp-services
+{% endif %}
+{% for arg in ingress_nginx_controller_additional_args %}
+    {{ arg }}
+{% endfor %}
+{% endif %}
+
+{% if ingress_nginx_node_selector %}
+  nodeSelector:
+{{ ingress_nginx_node_selector | to_nice_yaml | indent(4, true) }}
+{% endif %}
+
+{% if ingress_nginx_tolerations %}
+  tolerations:
+{{ ingress_nginx_tolerations | to_nice_yaml | indent(4, true) }}
+{% endif %}
+
+# Default backend
+defaultBackend:
+  enabled: true
+  image:
+    registry: registry.k8s.io
+    image: defaultbackend-amd64
+    tag: "1.5"
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
