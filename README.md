@@ -1,10 +1,10 @@
 # Saga Deploy
 
-This repository contains Ansible playbooks and roles for deploying Saga Pegasus Cluster. The cluster can operate as full node (optinally archive) or validator.
+This repository contains Ansible playbooks and roles for deploying Saga Pegasus Cluster. The cluster can operate as full node (optionally archive) or validator.
 
 ## Prerequisites
 
-- Kubernetes cluster
+- Dedicated Kubernetes cluster. Sharing the cluster with other workloads might be problematic.
 - Kubeconfig file with access to the cluster available locally for the deployer. If using RBAC, make sure the Role is allowed to create workloads and Roles.
 - Ansible 2.9+
 - Python 3.6+
@@ -13,7 +13,7 @@ This repository contains Ansible playbooks and roles for deploying Saga Pegasus 
 ### Kubernetes Addons
 - CSI driver
 - A `StorageClass` named `saga-default` handled by the CSI driver and, ideally, persistent. Running ephemeral storages is possible but not advised.
-- If `expose_p2p = true`, a LoadBalancer implementation like MetalLB installed in your cluster. Cloud native solution are also compatible. This is hightly recommended, although it is possible not to expose the p2p port publicly and rely on ClusterIP services. The implementation should attach an external ip or hostname to the newly created `LoadBalancer` services. We will typically require 2-3 IPs.
+- If `expose_p2p = true`, a LoadBalancer implementation like MetalLB installed in your cluster. Cloud native solutions are also compatible. This is highly recommended, although it is possible not to expose the p2p port publicly and rely on ClusterIP services. The implementation should attach an external ip or hostname to the newly created `LoadBalancer` services. We will typically require 2-3 IPs.
 
 ## Deploy Saga Pegasus
 
@@ -23,7 +23,7 @@ Create your inventory file copying one from the `samples` directory, based on th
 - `mode`: `fullnode|service-provider|validator`
 - `moniker`: <your_moniker>
 - `kubeconfig_file`: local path for the kubeconfig (e.g.: `~/.kube/your_cluster`)
-- `expose_p2p`: bool. If true (recommended), you will have to be able to allocate external IPs (or hostname) to LoadBalancer services.
+- `expose_p2p`: bool (optional). If true (default, recommended), you will have to be able to allocate external IPs (or hostname) to LoadBalancer services.
 
 Plus, those are the required secrets:
 - `aws_access_key_id`: aws credentials to access the S3 genesis bucket. Ask to be whitelisted

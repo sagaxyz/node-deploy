@@ -1,3 +1,9 @@
+- name: Create SPC namespace
+  kubernetes.core.k8s:
+    state: present
+    namespace: sagasrv-spc
+    kubeconfig: "{{ kubeconfig_file }}"
+
 - name: Deploy SPC LB
   kubernetes.core.k8s:
     state: present
