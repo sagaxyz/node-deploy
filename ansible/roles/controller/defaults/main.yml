@@ -1,5 +1,5 @@
 # Controller config
-controller_version: "0.10.2-alpha.2"
+controller_version: "0.10.2"
 controller_image: "sagaxyz/controller:{{ controller_version }}"
 controller_resources:
   requests:
