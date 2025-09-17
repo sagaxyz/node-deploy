@@ -153,7 +153,8 @@ done
 # Cleanup temp directory
 rm -rf "$tmp_dir"
 
-log "\n======== Status Summary ========"
+log ""
+log "======== Status Summary ========"
 log "🟢 In sync: $in_sync"
 log "🟡 Catching up: $catching_up"
 if [ ${#catching_up_chains[@]} -gt 0 ]; then
