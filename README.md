@@ -56,7 +56,7 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 - Make sure `mode: fullnode` in your inventory file.
 - Follow the [Deploy Saga Pegasus](#deploy-saga-pegasus) instructions
 - Verify that the validator is spinning up new chains once SPC is in sync `kubectl get pods -A | grep chainlet`
-- Make sure the chains are in sync: `scripts/sync-status.sh [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
+- Make sure the chains are in sync: `scripts/chainlets-status.sh [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
 
 ### Scale down the old cluster
 **After making sure the new cluster is in sync**
