@@ -1,6 +1,6 @@
 - name: Generate chainlet template
   ansible.builtin.template:
-    src: templates/chainlet/chainlet-deploy.yml.tmpl.j2
+    src: templates/chainlet/chainlet.yml.tmpl.j2
     dest: "{{ chainlet_template_dest }}"
     mode: '0644'
     variable_start_string: "%%%" # to disable golang variables substitutions

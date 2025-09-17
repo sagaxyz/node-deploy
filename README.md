@@ -46,13 +46,17 @@ This will install all the roles in the right order: metrics (if enabled), ingres
 The playbooks are idempotent, so they can be run as much as possible with no negative consequences. It is possible to just redeploy a single component using `--tags <role>`. E.g.: `--tags controller`.
 
 ## Migration from AWS
-If you are already running a validator on AWS EKS, follow this part to migrate. It is really important to follow the exact sequence of operation to avoid double signing.
+If you are already running a validator on AWS EKS, follow this part to migrate. It is really important to follow the exact sequence of operation to avoid double signing:
+1. Deploy the new cluster in fullnode mode. Verify all the chainlets are started and in sync. Check in grafana that the block production doesn't have hiccups.
+2. Scale down the old cluster.
+3. Redeploy the new cluster in validator mode. It's just a redeploy of the controller and have it redeploy all the chains.
+
 
 ### Deploy the new cluster in fullnode mode
 - Make sure `mode: fullnode` in your inventory file.
 - Follow the [Deploy Saga Pegasus](#deploy-saga-pegasus) instructions
 - Verify that the validator is spinning up new chains once SPC is in sync `kubectl get pods -A | grep chainlet`
-- Make sure the chains are in sync: `kubectl get pods -A | awk '/chainlet/{print "kubectl exec deployment/chainlet -n " $1 " -- sagaosd status | jq -r .sync_info.catching_up"}'`. Then execute the output commands. Make sure all of the chains return "false".
+- Make sure the chains are in sync: `scripts/sync-status.sh [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
 
 ### Scale down the old cluster
 **After making sure the new cluster is in sync**
@@ -65,6 +69,9 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 
 ### Redeploy the new cluster in validator mode
 **After making sure the old cluster is scaled down completely**
+
+⚠️⚠️⚠️ **WARNING**: Make sure the old cluster is completely scaled down before proceeding. Running two validators simultaneously will result in double signing and slashing. ⚠️⚠️⚠️
+
 - In the inventory set `mode: validator`
 - Make sure you have the `validator_mnemonic` correctly set
 - Redeploy ([Deploy](#deploy))

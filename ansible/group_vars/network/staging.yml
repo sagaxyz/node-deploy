@@ -9,6 +9,7 @@ stake_owner_address: saga1z3q8z0k6ygzs8krcd4u3s6ewa8de8nr645hh0l
 foundation_wallet_address: saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2
 is_testnet: true
 controller_chainlet_pvc_size: "50Gi"
+hub_chain_id: hub_5464113-1
 
 # StateSync
 statesync_rpc_domains:
@@ -20,4 +21,5 @@ ssc:
   chain_id: "ssc-staging-1"
   denom: "utsaga"
   rpc: "http://34.9.0.15:26657"
+  grpc: "http://34.9.0.15:9090"
   consumer_gas_price: "0.01"
