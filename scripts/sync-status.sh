@@ -77,7 +77,7 @@ if [ -n "$KUBECONFIG_FILE" ]; then
     log "Using kubeconfig: $KUBECONFIG_FILE"
 else
     KUBECTL="kubectl"
-    log "Using current context: $(kubectl config current-context)"
+    log "Using current context: $($KUBECTL config current-context)"
 fi
 
 log ""
