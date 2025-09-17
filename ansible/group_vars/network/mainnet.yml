@@ -9,6 +9,7 @@ stake_owner_address: saga1k70m2ms8kyta5749nz2t77ts0xt6229qcle9jg
 foundation_wallet_address: saga1u2a8ktctqhpx655ysw7ru27t6hqt9wlq4fn5ca
 is_testnet: false
 controller_chainlet_pvc_size: "60Gi"
+hub_chain_id: hub_5464111-1
 
 # StateSync
 statesync_rpc_domains:
