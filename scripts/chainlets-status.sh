@@ -1,26 +1,7 @@
 #!/bin/bash
 
-# ANSI color codes
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-NC='\033[0m' # No Color
-
-log() {
-    echo -e "$1"
-}
-
-success() {
-    echo -e "${GREEN}$1${NC}"
-}
-
-error() {
-    echo -e "${RED}$1${NC}"
-}
-
-warning() {
-    echo -e "${YELLOW}$1${NC}"
-}
+# Source shared logging functions
+source "$(dirname "$0")/shared/log.sh"
 
 print_usage() {
     log "Usage: $0 [OPTIONS]"
@@ -140,11 +121,11 @@ for file in "$tmp_dir"/*.txt; do
                 ;;
             "true")
                 ((catching_up++))
-                catching_up_chains+=("$chainlet")
+                catching_up_chains+=("saga-${chainlet//_/-}")
                 ;;
             *)
                 ((not_running++))
-                not_running_chains+=("$chainlet")
+                not_running_chains+=("saga-${chainlet//_/-}")
                 ;;
         esac
     fi
