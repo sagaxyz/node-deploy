@@ -55,8 +55,7 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 ### Deploy the new cluster in fullnode mode
 - Make sure `mode: fullnode` in your inventory file.
 - Follow the [Deploy Saga Pegasus](#deploy-saga-pegasus) instructions
-- Verify that the validator is spinning up new chains once SPC is in sync `kubectl get pods -A | grep chainlet`
-- Make sure the chains are in sync: `scripts/chainlets-status.sh [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
+- Make sure the chains are in sync: `scripts/cluster.sh chainlets-status [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
 
 ### Scale down the old cluster
 **After making sure the new cluster is in sync**
@@ -75,7 +74,20 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 - In the inventory set `mode: validator`
 - Make sure you have the `validator_mnemonic` correctly set
 - Redeploy ([Deploy](#deploy))
-- Restart the controller: `kubectl delete pod -l app=controller -n sagasrv-controller`
-- Redeploy every chainlet deleting the deployment and having the controller redeploy it as validator: `kubectl get pods -A | awk '/chainlet/{print "kubectl delete deployment chainlet -n " $1}'` and then execute the commands in the output.
+- Restart the controller: `scripts/cluster.sh restart-controller`
+- Redeploy every chainlet deleting the deployment and having the controller redeploy it as validator: `scripts/cluster.sh redeploy-all-chainlets` and then execute the commands in the output.
 
-Now you should be able to see all the chainlets restarting: `kubectl get pods -A | grep chainlet`. Check the log of any of those to make sure they are participating 
+Now you should be able to see all the chainlets restarting: `kubectl get pods -A | grep chainlet`. Check the status with `scripts/cluster.sh chainlets-status` making sure all of them are restarting and getting in sync.
+
+## Utils
+### cluster.sh
+Collection of util commands to interact with the cluster. It supports the common operations:
+- scale-down-controller           Scale down the controller deployment"
+- scale-up-controller             Scale up the controller deployment"
+- restart-controller              Restart controller pod"
+- restart-chainlet <identifier>   Restart chainlet pods by namespace or chain_id"
+- redeploy-chainlet <identifier>  Redeploy chainlet deployment by namespace or chain_id"
+- redeploy-all-chainlets          Redeploy all chainlet deployments in saga-* namespaces"
+- chainlets-status                Show status of all chainlets"
+
+Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context, than the current. Use `scripts/cluster.sh --help` for usage.
