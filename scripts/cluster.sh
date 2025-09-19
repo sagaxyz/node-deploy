@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Source shared logging functions
 source "$(dirname "$0")/shared/log.sh"
+source "$(dirname "$0")/shared/io.sh"
 
 print_usage() {
     log "Usage: $0 [OPTIONS] COMMAND"
@@ -14,17 +14,23 @@ print_usage() {
     log ""
     log "COMMANDS:"
     log "  scale-down-controller          Scale down the controller deployment"
-    log "  scale-up-controller           Scale up the controller deployment"
+    log "  scale-up-controller            Scale up the controller deployment"
+    log "  restart-controller             Restart controller pod"
     log "  restart-chainlet <identifier>  Restart chainlet pods by namespace or chain_id"
     log "  redeploy-chainlet <identifier> Redeploy chainlet deployment by namespace or chain_id"
+    log "  redeploy-all-chainlets         Redeploy all chainlet deployments in saga-* namespaces"
+    log "  chainlets-status               Show status of all chainlets"
     log ""
     log "EXAMPLES:"
     log "  $0 scale-down-controller                        # Scale down using default kubeconfig"
     log "  $0 --kubeconfig ~/.kube/config scale-up-controller   # Scale up using specific kubeconfig"
+    log "  $0 restart-controller                          # Restart controller pod"
     log "  $0 restart-chainlet saga-my-chain              # Restart using full namespace"
     log "  $0 restart-chainlet my_chain_id                # Restart using chain_id (converts to saga-my-chain-id)"
     log "  $0 redeploy-chainlet saga-my-chain             # Redeploy using full namespace"
     log "  $0 redeploy-chainlet my_chain_id               # Redeploy using chain_id"
+    log "  $0 redeploy-all-chainlets                      # Redeploy all chainlets"
+    log "  $0 chainlets-status                            # Show chainlets status"
 }
 
 log_and_execute_cmd() {
@@ -44,6 +50,22 @@ get_namespace() {
     fi
 }
 
+# Shared function to redeploy chainlet in a specific namespace
+redeploy_chainlet_in_namespace() {
+    local namespace="$1"
+    log "Redeploying chainlet in namespace: $namespace"
+
+    log_and_execute_cmd $KUBECTL delete deployment chainlet -n "$namespace"
+
+    if [ $? -eq 0 ]; then
+        success "Chainlet deployment in namespace '$namespace' deleted successfully"
+    else
+        error "Failed to delete chainlet deployment in namespace '$namespace'"
+        return 1
+    fi
+    return 0
+}
+
 # Parse command line arguments
 KUBECONFIG_FILE=""
 COMMAND=""
@@ -59,7 +81,7 @@ while [[ $# -gt 0 ]]; do
             print_usage
             exit 0
             ;;
-        scale-down-controller|scale-up-controller)
+        scale-down-controller|scale-up-controller|restart-controller|redeploy-all-chainlets|chainlets-status)
             COMMAND="$1"
             shift
             ;;
@@ -125,6 +147,18 @@ case "$COMMAND" in
             exit 1
         fi
         ;;
+    restart-controller)
+        log "Restarting controller..."
+        log_and_execute_cmd $KUBECTL delete pod -n sagasrv-controller -l app=controller
+
+        if [ $? -eq 0 ]; then
+            success "Controller pod restarted successfully"
+            log "New pod will be created automatically by the deployment"
+        else
+            error "Failed to restart controller pod"
+            exit 1
+        fi
+        ;;
     restart-chainlet)
         NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
         log "Restarting chainlet in namespace: $NAMESPACE"
@@ -141,16 +175,79 @@ case "$COMMAND" in
         ;;
     redeploy-chainlet)
         NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
-        log "Redeploying chainlet in namespace: $NAMESPACE"
-
-        log_and_execute_cmd $KUBECTL delete deployment chainlet -n "$NAMESPACE"
         
-        if [ $? -eq 0 ]; then
-            success "Chainlet deployment in namespace '$NAMESPACE' deleted successfully"
+        if redeploy_chainlet_in_namespace "$NAMESPACE"; then
             log "New deployment will be created automatically by the controller"
         else
-            error "Failed to delete chainlet deployment in namespace '$NAMESPACE'"
             exit 1
+        fi
+        ;;
+    redeploy-all-chainlets)
+        # Check if controller is running
+        if ! $KUBECTL get pods -n sagasrv-controller -l app=controller | grep -q "Running"; then
+            error "Controller is not running. Please ensure controller is up before redeploying chainlets."
+            log "Run: $0 scale-up-controller"
+            exit 1
+        fi
+
+        # Get all saga-* namespaces that contain chainlet deployments
+        CHAINLET_NAMESPACES=($($KUBECTL get deployment -A | grep chainlet | grep ^saga- | awk '{print $1}'))
+
+        if [ ${#CHAINLET_NAMESPACES[@]} -eq 0 ]; then
+            warning "No chainlet deployments found"
+            exit 0
+        fi
+
+        if [ ${#CHAINLET_NAMESPACES[@]} -eq 0 ]; then
+            warning "No chainlet deployments found in saga-* namespaces"
+            exit 0
+        fi
+
+        log "Found chainlet deployments in ${#CHAINLET_NAMESPACES[@]} namespace(s):"
+        for ns in "${CHAINLET_NAMESPACES[@]}"; do
+            log "  - $ns"
+        done
+
+        log ""
+        if ! confirm_action "⚠️⚠️⚠️ This will redeploy ALL chainlet deployments in the above namespaces and will cause ${BOLD}DOWNTIME${NC}"; then
+            exit 0
+        fi
+
+        # Redeploy all chainlets
+        failed_count=0
+        success_count=0
+
+        for ns in "${CHAINLET_NAMESPACES[@]}"; do
+            if redeploy_chainlet_in_namespace "$ns"; then
+                ((success_count++))
+            else
+                ((failed_count++))
+            fi
+        done
+
+        log ""
+        if [ $failed_count -eq 0 ]; then
+            success "✅ Successfully redeployed all $success_count chainlet deployments"
+            log "New deployments will be created automatically by the controller"
+        else
+            error "❌ $success_count succeeded, $failed_count failed"
+            exit 1
+        fi
+        ;;
+    chainlets-status)
+        SCRIPT_DIR="$(dirname "$0")"
+        CHAINLETS_STATUS_SCRIPT="$SCRIPT_DIR/cmd/chainlets-status.sh"
+
+        if [ ! -f "$CHAINLETS_STATUS_SCRIPT" ]; then
+            error "chainlets-status.sh script not found at: $CHAINLETS_STATUS_SCRIPT"
+            exit 1
+        fi
+
+        # Build command with optional kubeconfig
+        if [ -n "$KUBECONFIG_FILE" ]; then
+            exec "$CHAINLETS_STATUS_SCRIPT" --kubeconfig "$KUBECONFIG_FILE"
+        else
+            exec "$CHAINLETS_STATUS_SCRIPT"
         fi
         ;;
 esac

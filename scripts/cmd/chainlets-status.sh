@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source shared logging functions
-source "$(dirname "$0")/shared/log.sh"
+source "$(dirname "$0")/../shared/log.sh"
 
 print_usage() {
     log "Usage: $0 [OPTIONS]"
@@ -55,10 +55,10 @@ if [ -n "$KUBECONFIG_FILE" ]; then
         exit 1
     fi
     KUBECTL="kubectl --kubeconfig=$KUBECONFIG_FILE"
-    log "Using kubeconfig: $KUBECONFIG_FILE"
+    # log "Using kubeconfig: $KUBECONFIG_FILE"
 else
     KUBECTL="kubectl"
-    log "Using current context: $($KUBECTL config current-context)"
+    # log "Using current context: $($KUBECTL config current-context)"
 fi
 
 log ""
