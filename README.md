@@ -89,5 +89,13 @@ Collection of util commands to interact with the cluster. It supports the common
 - redeploy-chainlet <identifier>  Redeploy chainlet deployment by namespace or chain_id"
 - redeploy-all-chainlets          Redeploy all chainlet deployments in saga-* namespaces"
 - chainlets-status                Show status of all chainlets"
+- logs <identifier>               Chainlet logs by 
+- install-completion              Install bash completion for cluster.sh
+
 
 Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context, than the current. Use `scripts/cluster.sh --help` for usage.
+
+**Make it faster**
+- Add alias `c=<your_path>/scripts/cluster.sh` to the file loaded on start of the terminal (e.g. `~/.bashrc`, `~/.zshrc`)
+- Run `c install-completion`
+- Enjoy autocomplete of commands, options, namespaces and chainids.

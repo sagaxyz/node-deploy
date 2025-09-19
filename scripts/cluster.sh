@@ -19,7 +19,9 @@ print_usage() {
     log "  restart-chainlet <identifier>  Restart chainlet pods by namespace or chain_id"
     log "  redeploy-chainlet <identifier> Redeploy chainlet deployment by namespace or chain_id"
     log "  redeploy-all-chainlets         Redeploy all chainlet deployments in saga-* namespaces"
+    log "  logs <identifier>              Follow logs for chainlet by namespace or chain_id"
     log "  chainlets-status               Show status of all chainlets"
+    log "  install-completion             Install bash completion for this script"
     log ""
     log "EXAMPLES:"
     log "  $0 scale-down-controller                        # Scale down using default kubeconfig"
@@ -30,7 +32,10 @@ print_usage() {
     log "  $0 redeploy-chainlet saga-my-chain             # Redeploy using full namespace"
     log "  $0 redeploy-chainlet my_chain_id               # Redeploy using chain_id"
     log "  $0 redeploy-all-chainlets                      # Redeploy all chainlets"
+    log "  $0 logs saga-my-chain                          # Follow logs using full namespace"
+    log "  $0 logs my_chain_id                            # Follow logs using chain_id"
     log "  $0 chainlets-status                            # Show chainlets status"
+    log "  $0 install-completion                          # Install bash completion"
 }
 
 log_and_execute_cmd() {
@@ -81,11 +86,11 @@ while [[ $# -gt 0 ]]; do
             print_usage
             exit 0
             ;;
-        scale-down-controller|scale-up-controller|restart-controller|redeploy-all-chainlets|chainlets-status)
+        scale-down-controller|scale-up-controller|restart-controller|redeploy-all-chainlets|chainlets-status|install-completion)
             COMMAND="$1"
             shift
             ;;
-        restart-chainlet|redeploy-chainlet)
+        restart-chainlet|redeploy-chainlet|logs)
             COMMAND="$1"
             if [[ $# -lt 2 ]]; then
                 error "$1 command requires an identifier (namespace or chain_id)"
@@ -182,6 +187,13 @@ case "$COMMAND" in
             exit 1
         fi
         ;;
+    logs)
+        NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
+        log "Following logs for chainlet in namespace: $NAMESPACE"
+        
+        # Follow logs with exec (replaces current process)
+        exec $KUBECTL logs -f deployment/chainlet -n "$NAMESPACE"
+        ;;
     redeploy-all-chainlets)
         # Check if controller is running
         if ! $KUBECTL get pods -n sagasrv-controller -l app=controller | grep -q "Running"; then
@@ -248,6 +260,49 @@ case "$COMMAND" in
             exec "$CHAINLETS_STATUS_SCRIPT" --kubeconfig "$KUBECONFIG_FILE"
         else
             exec "$CHAINLETS_STATUS_SCRIPT"
+        fi
+        ;;
+    install-completion)
+        SCRIPT_DIR="$(dirname "$0")"
+        COMPLETION_SCRIPT="$SCRIPT_DIR/config/cluster-completion.bash"
+
+        if [ ! -f "$COMPLETION_SCRIPT" ]; then
+            error "Completion script not found at: $COMPLETION_SCRIPT"
+            exit 1
+        fi
+
+        # Determine completion directory
+        if [ -d "/usr/local/etc/bash_completion.d" ]; then
+            COMPLETION_DIR="/usr/local/etc/bash_completion.d"
+        elif [ -d "/etc/bash_completion.d" ]; then
+            COMPLETION_DIR="/etc/bash_completion.d"
+        elif [ -d "$HOME/.local/share/bash-completion/completions" ]; then
+            COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
+        else
+            # Create user completion directory if none exists
+            COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
+            mkdir -p "$COMPLETION_DIR"
+        fi
+
+        COMPLETION_FILE="$COMPLETION_DIR/cluster.sh"
+
+        log "Installing bash completion to: $COMPLETION_FILE"
+
+        if cp "$COMPLETION_SCRIPT" "$COMPLETION_FILE"; then
+            success "✅ Bash completion installed successfully"
+            log ""
+            log "To enable completion in your current session, run:"
+            log "  source $COMPLETION_FILE"
+            log ""
+            log "To enable completion permanently, add this to your ~/.bashrc:"
+            log "  source $COMPLETION_FILE"
+            log ""
+            log "Or restart your shell to use the system-wide completion."
+        else
+            error "Failed to install completion script"
+            log "You may need to run with sudo for system-wide installation:"
+            log "  sudo $0 install-completion"
+            exit 1
         fi
         ;;
 esac
