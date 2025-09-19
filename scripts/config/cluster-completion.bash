@@ -8,7 +8,7 @@ _cluster_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Available commands
-    commands="scale-down-controller scale-up-controller restart-controller restart-chainlet redeploy-chainlet redeploy-all-chainlets logs chainlets-status install-completion"
+    commands="scale-down-controller scale-up-controller restart-controller restart-chainlet redeploy-chainlet redeploy-all-chainlets logs chainlet-status chainlets-status install-completion"
     
     # Available options
     opts="--kubeconfig -h --help"
@@ -22,7 +22,7 @@ _cluster_completion() {
 
     # Handle command-specific completions
     case "${prev}" in
-        restart-chainlet|redeploy-chainlet|logs)
+        restart-chainlet|redeploy-chainlet|logs|chainlet-status)
             # For chainlet commands, complete with both namespaces and chainids
             if command -v kubectl >/dev/null 2>&1; then
                 # Get saga-* namespaces (full namespace names)

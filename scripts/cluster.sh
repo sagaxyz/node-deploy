@@ -20,6 +20,7 @@ print_usage() {
     log "  redeploy-chainlet <identifier> Redeploy chainlet deployment by namespace or chain_id"
     log "  redeploy-all-chainlets         Redeploy all chainlet deployments in saga-* namespaces"
     log "  logs <identifier>              Follow logs for chainlet by namespace or chain_id"
+    log "  chainlet-status <identifier>   Show sync status for a specific chainlet"
     log "  chainlets-status               Show status of all chainlets"
     log "  install-completion             Install bash completion for this script"
     log ""
@@ -34,6 +35,8 @@ print_usage() {
     log "  $0 redeploy-all-chainlets                      # Redeploy all chainlets"
     log "  $0 logs saga-my-chain                          # Follow logs using full namespace"
     log "  $0 logs my_chain_id                            # Follow logs using chain_id"
+    log "  $0 chainlet-status saga-my-chain               # Check specific chainlet status"
+    log "  $0 chainlet-status my_chain_id                 # Check specific chainlet status using chain_id"
     log "  $0 chainlets-status                            # Show chainlets status"
     log "  $0 install-completion                          # Install bash completion"
 }
@@ -90,7 +93,7 @@ while [[ $# -gt 0 ]]; do
             COMMAND="$1"
             shift
             ;;
-        restart-chainlet|redeploy-chainlet|logs)
+        restart-chainlet|redeploy-chainlet|logs|chainlet-status)
             COMMAND="$1"
             if [[ $# -lt 2 ]]; then
                 error "$1 command requires an identifier (namespace or chain_id)"
@@ -193,6 +196,26 @@ case "$COMMAND" in
         
         # Follow logs with exec (replaces current process)
         exec $KUBECTL logs -f deployment/chainlet -n "$NAMESPACE"
+        ;;
+    chainlet-status)
+        NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
+        log "Checking status for chainlet in namespace: $NAMESPACE"
+
+        # Get chainlet status
+        status=$($KUBECTL exec -n "$NAMESPACE" deployment/chainlet -- sagaosd status 2>/dev/null | jq -r '(.SyncInfo // .sync_info) | .catching_up' 2>/dev/null)
+
+        case "$status" in
+            "false")
+                success "✅ In sync"
+                ;;
+            "true")
+                warning "🟡 Syncing"
+                ;;
+            *)
+                error "🔴 Offline"
+                exit 1
+                ;;
+        esac
         ;;
     redeploy-all-chainlets)
         # Check if controller is running
