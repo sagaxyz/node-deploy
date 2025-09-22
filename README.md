@@ -61,10 +61,14 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 **After making sure the new cluster is in sync**
 - Switch context to old EKS cluster (or pass `--kubeconfig <kubeconfig_file>` to the kubectl commands)
 - Scale down spc: `kubectl scale deployment spc -n sagasrv-spc --replicas=0`
-- `kubectl scale deployment/saga-controller -n sagasrv-controller --replicas=0`
-- Print the command to scale down all the chainlets `kubectl get pods -A | awk '/chainlet/{print "kubectl scale deployment/chainlet -n " $1 " --replicas=0"}'`
-- Execute the previous command
+- Scale down controller `kubectl scale deployment/saga-controller -n sagasrv-controller --replicas=0`
+- Scale down chainlets: `kubectl get pods -A | grep chainlet | awk '{print $1}' | xargs -I{} kubectl -n {} scale deployment/chainlet --replicas=0`
 - Verify all the chainlets are terminated: `kubectl get pods -A | grep chainlet` should be empty
+
+**If something goes wrong, scale SPC and Controller back up**
+- SPC: `kubectl scale deployment spc -n sagasrv-spc --replicas=1`
+- Controller: `kubectl scale deployment/saga-controller -n sagasrv-controller --replicas=1`
+The controller will scale chainlets back up and the validator will be restored.
 
 ### Redeploy the new cluster in validator mode
 **After making sure the old cluster is scaled down completely**
@@ -73,6 +77,7 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 
 - In the inventory set `mode: validator`
 - Make sure you have the `validator_mnemonic` correctly set
+- Wipe out SPC: `kubectl delete deployment spc -n sagasrv-spc && kubectl delete pvc spc-pvc -n sagasrv-spc`
 - Redeploy ([Deploy](#deploy))
 - Restart the controller: `scripts/cluster.sh restart-controller`
 - Redeploy every chainlet deleting the deployment and having the controller redeploy it as validator: `scripts/cluster.sh redeploy-all-chainlets` and then execute the commands in the output.

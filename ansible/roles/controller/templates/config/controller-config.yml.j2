@@ -43,7 +43,7 @@ deployment:
         number: 8546
         host_suffix: ""
     env:
-      validator_mnemonic: "{{ validator_mnemonic | default('void') }}"
+      validator_mnemonic: "{% if validator_provider == 1 %}{{ validator_mnemonic }}{% else %}void{% endif %}"
       s3bucket: "{{ s3_bucket }}/chainlets/gentx"
       validator_provider: "{{ validator_provider }}"
       moniker: "{{ moniker }}"
