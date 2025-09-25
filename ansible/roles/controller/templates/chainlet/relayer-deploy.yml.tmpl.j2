@@ -93,6 +93,10 @@ spec:
               value: "{{ .HubDenom }}"
             - name: HUB_RPC
               value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657"
+            - name: HUB_GRPC
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:9090"
+            - name: HUB_WS
+              value: "ws://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657/websocket"
             - name: HUB_API
               value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:1317"
             - name: HUB_MNEMONIC
