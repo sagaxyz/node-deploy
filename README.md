@@ -95,7 +95,8 @@ Collection of util commands to interact with the cluster. It supports the common
 - redeploy-all-chainlets          Redeploy all chainlet deployments in saga-* namespaces"
 - chainlets-status                Show status of all chainlets"
 - logs <identifier>               Follow chainlet logs by namespace or chain_id
-- chainlet-status <identifier>    Show sync status for a specific chainlet 
+- chainlet-status <identifier>    Show sync status for a specific chainlet
+- expand-pvc <identifier> [%]     Expand chainlet PVC by percentage (default: 20) 
 - install-completion              Install bash completion for cluster.sh
 
 
