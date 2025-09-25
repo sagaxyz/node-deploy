@@ -47,7 +47,7 @@ spec:
               memory: "1Gi"
             limits:
               memory: "2Gi"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["bash", "-c", "echo Waiting $CHANNEL_WAIT_TIME && sleep $CHANNEL_WAIT_TIME && ./start.sh"]
           env:
             - name: KEYPASSWD

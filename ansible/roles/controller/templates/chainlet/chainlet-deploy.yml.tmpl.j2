@@ -68,7 +68,7 @@ spec:
       containers:
         - image: "{{ .ChainletImage }}"
           name: chainlet
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
           - name: CHAINID
             value: "{{ .ChainId }}"
