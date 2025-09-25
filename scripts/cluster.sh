@@ -21,6 +21,7 @@ print_usage() {
     log "  redeploy-all-chainlets         Redeploy all chainlet deployments in saga-* namespaces"
     log "  logs <identifier>              Follow logs for chainlet by namespace or chain_id"
     log "  chainlet-status <identifier>   Show sync status for a specific chainlet"
+    log "  expand-pvc <identifier> [%]    Expand chainlet PVC by percentage (default: 20%)"
     log "  chainlets-status               Show status of all chainlets"
     log "  install-completion             Install bash completion for this script"
     log ""
@@ -37,6 +38,8 @@ print_usage() {
     log "  $0 logs my_chain_id                            # Follow logs using chain_id"
     log "  $0 chainlet-status saga-my-chain               # Check specific chainlet status"
     log "  $0 chainlet-status my_chain_id                 # Check specific chainlet status using chain_id"
+    log "  $0 expand-pvc saga-my-chain                    # Expand PVC by 20% (default)"
+    log "  $0 expand-pvc my_chain_id 50                   # Expand PVC by 50%"
     log "  $0 chainlets-status                            # Show chainlets status"
     log "  $0 install-completion                          # Install bash completion"
 }
@@ -78,6 +81,7 @@ redeploy_chainlet_in_namespace() {
 KUBECONFIG_FILE=""
 COMMAND=""
 CHAINLET_IDENTIFIER=""
+EXPAND_PERCENTAGE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -103,6 +107,24 @@ while [[ $# -gt 0 ]]; do
             fi
             CHAINLET_IDENTIFIER="$2"
             shift 2
+            ;;
+        expand-pvc)
+            COMMAND="$1"
+            if [[ $# -lt 2 ]]; then
+                error "expand-pvc command requires an identifier (namespace or chain_id)"
+                echo ""
+                print_usage
+                exit 1
+            fi
+            CHAINLET_IDENTIFIER="$2"
+            # Check if there's an optional percentage parameter
+            if [[ $# -gt 2 && "$3" =~ ^[0-9]+$ ]]; then
+                EXPAND_PERCENTAGE="$3"
+                shift 3
+            else
+                EXPAND_PERCENTAGE="20"  # Default to 20%
+                shift 2
+            fi
             ;;
         *)
             error "Unknown option/command: $1"
@@ -172,7 +194,7 @@ case "$COMMAND" in
         log "Restarting chainlet in namespace: $NAMESPACE"
 
         log_and_execute_cmd $KUBECTL delete pod -n "$NAMESPACE" -l app=chainlet
-        
+
         if [ $? -eq 0 ]; then
             success "Chainlet pods in namespace '$NAMESPACE' restarted successfully"
             log "New pods will be created automatically by the deployment"
@@ -183,7 +205,7 @@ case "$COMMAND" in
         ;;
     redeploy-chainlet)
         NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
-        
+
         if redeploy_chainlet_in_namespace "$NAMESPACE"; then
             log "New deployment will be created automatically by the controller"
         else
@@ -193,7 +215,7 @@ case "$COMMAND" in
     logs)
         NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
         log "Following logs for chainlet in namespace: $NAMESPACE"
-        
+
         # Follow logs with exec (replaces current process)
         exec $KUBECTL logs -f deployment/chainlet -n "$NAMESPACE"
         ;;
@@ -216,6 +238,62 @@ case "$COMMAND" in
                 exit 1
                 ;;
         esac
+        ;;
+    expand-pvc)
+        NAMESPACE=$(get_namespace "$CHAINLET_IDENTIFIER")
+        PVC_NAME="chainlet-pvc"
+
+        log "Expanding PVC '$PVC_NAME' in namespace '$NAMESPACE' by $EXPAND_PERCENTAGE%"
+
+        # Check if PVC exists
+        if ! $KUBECTL get pvc "$PVC_NAME" -n "$NAMESPACE" >/dev/null 2>&1; then
+            error "PVC '$PVC_NAME' not found in namespace '$NAMESPACE'"
+            exit 1
+        fi
+
+        # Get current PVC size
+        current_size=$($KUBECTL get pvc "$PVC_NAME" -n "$NAMESPACE" -o jsonpath='{.spec.resources.requests.storage}')
+        if [ -z "$current_size" ]; then
+            error "Failed to get current PVC size"
+            exit 1
+        fi
+
+        log "Current PVC size: $current_size"
+
+        # Extract numeric value and unit from size (e.g., "200Gi" -> "200" and "Gi")
+        if [[ $current_size =~ ^([0-9]+)([A-Za-z]+)$ ]]; then
+            size_value=${BASH_REMATCH[1]}
+            size_unit=${BASH_REMATCH[2]}
+        else
+            error "Unable to parse current PVC size: $current_size"
+            exit 1
+        fi
+
+        # Calculate new size
+        new_size_value=$((size_value * (100 + EXPAND_PERCENTAGE) / 100))
+        new_size="${new_size_value}${size_unit}"
+
+        log "Expanding from $current_size to $new_size (${EXPAND_PERCENTAGE}% increase)"
+
+        # Patch the PVC
+        if $KUBECTL patch pvc "$PVC_NAME" -n "$NAMESPACE" -p "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"$new_size\"}}}}"; then
+            success "✅ PVC '$PVC_NAME' successfully expanded to $new_size"
+            log "Note: The expansion may take a few moments to complete depending on your storage provider"
+
+            # Restart chainlet pod to pick up the expanded storage
+            log "Restarting chainlet pod to apply expanded storage..."
+            if $KUBECTL delete pod -n "$NAMESPACE" -l app=chainlet >/dev/null 2>&1; then
+                success "✅ Chainlet pod restarted successfully"
+                log "New pod will be created automatically with expanded storage"
+            else
+                warning "⚠️ PVC expanded but failed to restart chainlet pod. You may need to restart manually."
+            fi
+        else
+            error "Failed to expand PVC '$PVC_NAME'"
+            exit 1
+        fi
+
+
         ;;
     redeploy-all-chainlets)
         # Check if controller is running
