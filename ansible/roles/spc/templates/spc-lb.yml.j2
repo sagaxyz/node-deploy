@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: spc-public
   namespace: sagasrv-spc
+{% if lb_annotations is defined %}
+  annotations:
+    {{ lb_annotations }}
+{% endif %}
   labels:
     app: spc
 spec:

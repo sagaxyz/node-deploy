@@ -13,7 +13,6 @@ controller:
   enableHttps: false
   service:
     type: ClusterIP
-
 {% if expose_p2p or ingress_nginx_controller_additional_args | length > 0 %}
   extraArgs:
 {% if expose_p2p %}

@@ -14,6 +14,10 @@ This repository contains Ansible playbooks and roles for deploying Saga Pegasus 
 - CSI driver
 - A `StorageClass` named `saga-default` handled by the CSI driver and, ideally, persistent. Running ephemeral storages is possible but not advised.
 - If `expose_p2p = true`, a LoadBalancer implementation like MetalLB installed in your cluster. Cloud native solutions are also compatible. This is highly recommended, although it is possible not to expose the p2p port publicly and rely on ClusterIP services. The implementation should attach an external ip or hostname to the newly created `LoadBalancer` services. We will typically require 2-3 IPs.
+- To create loadbalancer services in a cloud native environment you can use the following parameters to configure it:
+  - `lb_annotations`: supports a list of any annotations required by your cloud provider
+  - `chainlet_external_traffic_policy`: Defaults to `Cluster`, you can set it to `Local` to support a multi-port setup in a single loadbalancer, you will need to consult your cloud provider docuemtnation for compatiblity (for example, for Oracle Cloud, classic LB only supports multi-port configuration with local external traffic).
+  - `chainlet_allocate_loadbalancer_node_ports`: Similar to the above, defaults to `false` and can be set to `ture` as needed
 
 ## Deploy Saga Pegasus
 

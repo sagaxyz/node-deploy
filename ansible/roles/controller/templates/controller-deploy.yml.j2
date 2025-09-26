@@ -120,4 +120,4 @@ data:
   chainlet.yml.tmpl: |
     {{ lookup('file', chainlet_template_dest) | indent(4) }}
   lb.yml.tmpl: |
-    {{ lookup('file', '../roles/controller/templates/chainlet/lb.yml.tmpl') | indent(4) }}
+    {{ lookup('template', '../roles/controller/templates/chainlet/lb.yml.tmpl.j2') | indent(4) }}
