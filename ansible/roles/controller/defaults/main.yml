@@ -24,3 +24,6 @@ controller_chainlet_resources:
 controller_relayer_enabled: false
 controller_relayer_version: "0.4.2"
 controller_relayer_wait_time: "0"
+# Load Balancer Configuration
+controller_chainlet_external_traffic_policy: Cluster
+controller_chainlet_allocate_loadbalancer_node_ports: false
