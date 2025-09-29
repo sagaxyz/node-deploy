@@ -8,6 +8,7 @@
       - mainnet
       - testnet
       - staging
+      - devnet
     supported_modes:
       - validator
       - fullnode
@@ -30,7 +31,7 @@
       when: mode is not defined or mode not in supported_modes
 
   roles:
-    - { role: metrics, tags: [metrics] }
+    - { role: metrics, tags: [metrics], when: metrics_enabled }
     - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
     - { role: spc, tags: [spc] }
     - { role: controller, tags: [controller] }

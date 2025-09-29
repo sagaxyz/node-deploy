@@ -1,0 +1,24 @@
+# Chains config (spc and chainlets)
+spc_chain_id: spc-{{ dev_id }}-1
+spc_volume_size: 40Gi
+s3_bucket: s3://saga-platform-chain/{{ dev_id }}
+quorum_count: 1
+validator_addresses: saga1fjvpntp06t0zgqfv2krm0puk3p35rmm75arz72
+stake_owner_address: saga1z3q8z0k6ygzs8krcd4u3s6ewa8de8nr645hh0l
+foundation_wallet_address: saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2
+is_testnet: true
+controller_chainlet_pvc_size: "40Gi"
+hub_chain_id: hub_5464112-1
+
+# Enabled components
+expose_p2p: false
+metrics_enabled: false
+statesync_enabled: false
+
+# SSC
+ssc:
+  chain_id: "ssc-{{ dev_id }}-1"
+  denom: "utsaga"
+  rpc: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
+  grpc: "http://ssc.sagasrv-ssc.svc.cluster.local:9090"
+  consumer_gas_price: "0.01"

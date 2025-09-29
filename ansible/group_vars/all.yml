@@ -7,15 +7,10 @@ loglevel: info
 pruning_strategy: default
 stake_amount: 1500000
 staking_fees: 100000
-expose_p2p: true
 
 # Snapshots
 snapshot_interval: 1000
 snapshot_keep_recent: 2
 
 # StateSync
-statesync_enabled: true
 statesync_trust_interval: 1000
-
-# Metrics
-metrics_enabled: true
