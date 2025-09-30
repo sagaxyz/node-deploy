@@ -88,6 +88,23 @@ The controller will scale chainlets back up and the validator will be restored.
 
 Now you should be able to see all the chainlets restarting: `kubectl get pods -A | grep chainlet`. Check the status with `scripts/cluster.sh chainlets-status` making sure all of them are restarting and getting in sync.
 
+## Run a devnet cluster
+Devnet cluster is meant for development. It can run a single validator cluster. It is deployed like every other cluster (just `network: devnet`). By default it comes without metrics and does not expose p2p nor other services. For this reasons, transactions will require port-forwarding. E.g.:
+- SPC: `kubectl port-forward -n sagasrv-spc service/spc 26657:26657`. Then `spcd --node http://localhost:26657 <your_command>`
+- Chainlets: `kubectl port-forward -n saga-<chain_id> service/chainlet 26657:26657`. Then `sagaosd --node http://localhost:26657 <your_command>`
+
+Alternatively, spc and chainlets can be exposed setting `expose_p2p: true`. Also metrics can be deployed setting `metrics_enabled: true`.
+
+### Launch your first chainlet
+- Port forward spc: `kubectl port-forward -n sagasrv-spc service/spc 26657:26657`
+- Create chainlet stack: `spcd --node http://localhost:26657 tx chainlet create-chainlet-stack SagaOS "SagaOS Chainlet Stack" sagaxyz/sagaos:0.13.1 0.13.1 sha256:ced72e81e44926157e56d1c9dd3c0de5a5af50c2a87380f4be80d9d5196d86d3 100upsaga day 100upsaga --fees 2000upsaga --from saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 -y --chain-id <your_chain_id>`. Just use the "foundation" addres set up and the desired sagaosd version and make sure you set the right chain_id for spc based on your inventory.
+- Launch chainlet `spcd --node http://localhost:26657 tx chainlet launch-chainlet saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 SagaOS 0.13.1 myfirstchainlet '{"denom":"gas","gasLimit":10000000,"genAcctBalances":"saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2=1000000000","feeAccount":"saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2"}' --fees 500000upsaga --gas 800000 --from saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 --yes --chain-id <your_chain_id>`
+- (optional) Stop port spc forward process.
+- Port forward your chainlet RPC: `kubectl port-forward -n saga-<chain_id> service/chainlet 26657:26657`
+- Execute any cosmos transaction using `sagaosd --node http://localhost:26657 <your_command>`.
+
+NOTE: evm transaction will require port forward of port `8545` instead of `26657`.
+
 ## Utils
 ### cluster.sh
 Collection of util commands to interact with the cluster. It supports the common operations:

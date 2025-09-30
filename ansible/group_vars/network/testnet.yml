@@ -10,6 +10,11 @@ is_testnet: true
 controller_chainlet_pvc_size: "50Gi"
 hub_chain_id: hub_5464111-1
 
+# Enabled components
+expose_p2p: true
+metrics_enabled: true
+statesync_enabled: true
+
 # StateSync
 statesync_rpc_domains:
   - st1.sagarpc.io
