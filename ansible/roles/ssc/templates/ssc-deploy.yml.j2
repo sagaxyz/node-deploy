@@ -1,0 +1,131 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssc-data
+  namespace: {{ ssc_namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ ssc.volume_size }}
+{% if ssc_storage_class %}
+  storageClassName: {{ ssc_storage_class }}
+{% endif %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssc
+  namespace: {{ ssc_namespace }}
+  labels:
+    app: ssc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssc
+  template:
+    metadata:
+      labels:
+        app: ssc
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ ssc_metrics_port }}"
+    spec:
+      initContainers:
+        - name: init-data
+          image: busybox
+          command: ['sh', '-c', 'if [ ! -f /data/priv_validator_state.json ]; then echo {"height": "0", "round": 0, "step": 0} > /data/priv_validator_state.json; fi']
+          volumeMounts:
+            - name: ssc-data
+              mountPath: /data
+        - name: init-validator
+          image: {{ ssc_image }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /data/config/priv_validator_key.json ]; then
+                echo "Initializing validator..."
+                sscd init {{ ssc_key_name }} --home /data --chain-id {{ ssc.chain_id }} --default-denom {{ ssc.denom }}
+                
+                echo "Adding validator account..."
+                echo "$VALIDATOR_MNEMONIC" | sscd keys add {{ ssc_key_name }} --home /data --keyring-backend test --recover --no-backup
+                
+                echo "Adding genesis account..."
+                sscd add-genesis-account {{ ssc_key_name }} 1000000000000{{ ssc.denom }} --home /data --keyring-backend test
+                
+                echo "Creating gentx..."
+                sscd genesis gentx {{ ssc_key_name }} 1000000000{{ ssc.denom }} --home /data --keyring-backend test --chain-id {{ ssc.chain_id }}
+                
+                echo "Collecting gentxs..."
+                sscd genesis collect-gentxs --home /data
+                
+                echo "Validator initialization complete"
+              else
+                echo "Validator already initialized"
+              fi
+          env:
+            - name: KEY_PASSWORD
+              value: "{{ ssc.key_password }}"
+            - name: VALIDATOR_MNEMONIC
+              value: "{{ validator_mnemonic }}"
+          volumeMounts:
+            - name: ssc-data
+              mountPath: /data
+      containers:
+        - name: ssc
+          image: {{ ssc_image }}
+          command: ["sscd", "start", "--home", "/data", "--rpc.laddr", "tcp://0.0.0.0:{{ ssc_rpc_port }}", "--p2p.laddr", "tcp://0.0.0.0:{{ ssc_p2p_port }}", "--grpc.address", "0.0.0.0:{{ ssc_grpc_port }}"]
+          ports:
+            - containerPort: {{ ssc_rpc_port }}
+              name: rpc
+            - containerPort: {{ ssc_p2p_port }}
+              name: p2p
+            - containerPort: {{ ssc_grpc_port }}
+              name: grpc
+            - containerPort: {{ ssc_metrics_port }}
+              name: metrics
+          volumeMounts:
+            - name: ssc-data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "{{ ssc_resources.requests.memory }}"
+              cpu: "{{ ssc_resources.requests.cpu }}"
+            limits:
+              memory: "{{ ssc_resources.limits.memory }}"
+              cpu: "{{ ssc_resources.limits.cpu }}"
+          # Health checks removed - SSC may not expose health endpoint
+      volumes:
+        - name: ssc-data
+          persistentVolumeClaim:
+            claimName: ssc-data
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssc
+  namespace: {{ ssc_namespace }}
+  labels:
+    app: ssc
+spec:
+  type: ClusterIP
+  ports:
+    - name: rpc
+      port: {{ ssc_rpc_port }}
+      targetPort: {{ ssc_rpc_port }}
+    - name: p2p
+      port: {{ ssc_p2p_port }}
+      targetPort: {{ ssc_p2p_port }}
+    - name: grpc
+      port: {{ ssc_grpc_port }}
+      targetPort: {{ ssc_grpc_port }}
+    - name: metrics
+      port: {{ ssc_metrics_port }}
+      targetPort: {{ ssc_metrics_port }}
+  selector:
+    app: ssc

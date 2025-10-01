@@ -1,0 +1,20 @@
+network: devnet
+mode: validator
+kubeconfig_file: ~/.kube/saga-pegasus-ashish-eks
+moniker: my-devnet-validator
+keychain_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  # Add your encrypted password here
+
+# SSC Configuration (enabled by default for devnet)
+ssc_enabled: true
+ssc_validator_key: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  # Add your encrypted validator key here
+
+# Metrics
+metrics_enabled: true
+metrics_grafana_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  # Add your encrypted grafana password here
+
