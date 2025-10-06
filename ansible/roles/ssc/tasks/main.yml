@@ -5,7 +5,7 @@
       apiVersion: v1
       kind: Namespace
       metadata:
-        name: "{{ ssc_namespace }}"
+        name: "sagasrv-ssc"
     kubeconfig: "{{ kubeconfig_file }}"
 
 # Genesis file will be generated locally by the init container
@@ -21,7 +21,7 @@
 - name: Check SSC pod status
   kubernetes.core.k8s_info:
     kind: Pod
-    namespace: "{{ ssc_namespace }}"
+    namespace: "sagasrv-ssc"
     label_selectors:
       - "app=ssc"
     kubeconfig: "{{ kubeconfig_file }}"

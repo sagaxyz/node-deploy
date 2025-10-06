@@ -7,7 +7,8 @@ keychain_password: !vault |
   # Add your encrypted password here
 
 # SSC Configuration (enabled by default for devnet)
-ssc_enabled: true
+ssc:
+  enabled: true
 ssc_validator_key: !vault |
   $ANSIBLE_VAULT;1.1;AES256
   # Add your encrypted validator key here

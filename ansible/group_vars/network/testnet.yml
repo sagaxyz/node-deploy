@@ -21,8 +21,8 @@ statesync_rpc_domains:
   - stsrv1.sagarpc.io
 
 # SSC (disabled by default for testnet)
-ssc_enabled: false
 ssc:
+  enabled: false
   chain_id: "ssc-testnet-3"
   denom: "utsaga"
   rpc: "https://testnet2-keplr.sagarpc.io:443"

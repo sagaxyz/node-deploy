@@ -1,12 +1,7 @@
 # SSC Configuration
 ssc_enabled: false
 ssc_version: "0.5.0-alpha.2"
-ssc_image: "sagaxyz/ssc:{{ ssc_version }}"
-ssc_namespace: "sagasrv-ssc"
-ssc_rpc_port: 26657
-ssc_p2p_port: 26656
-ssc_grpc_port: 9090
-ssc_metrics_port: 26660
+# Hardcoded values are now used directly in templates
 
 # SSC Resources
 ssc_resources:
@@ -17,15 +12,13 @@ ssc_resources:
     memory: "1Gi"
     cpu: "0.5"
 
-# SSC Storage
-ssc_storage_class: ""
+# SSC Storage - using hardcoded saga-default storage class
 
 # SSC Network
 ssc_external_address: "127.0.0.1"
 ssc_additional_args: ""
 
-# SSC Key Management
-ssc_key_name: "ssc-validator-key"
+# SSC Key Management - using hardcoded key name ssc-validator
 ssc_validator_key: ""
 ssc_node_key: ""
 

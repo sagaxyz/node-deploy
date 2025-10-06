@@ -21,8 +21,8 @@ statesync_rpc_domains:
   - spsrv2.sagarpc.io
 
 # SSC (disabled by default for mainnet)
-ssc_enabled: false
 ssc:
+  enabled: false
   chain_id: "ssc-1"
   denom: "usaga"
   rpc: "https://ssc-rpc.sagarpc.io:443"

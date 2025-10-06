@@ -49,7 +49,7 @@ This will install all the roles in the right order: metrics (if enabled), ingres
 
 ### SSC (Saga Security Chain)
 
-The SSC role is optional and controlled by the `ssc_enabled` variable:
+The SSC role is optional and controlled by the `ssc.enabled` variable:
 - **Enabled by default**: Only for devnet environment
 - **Disabled by default**: For mainnet and testnet environments
 - **Features**:

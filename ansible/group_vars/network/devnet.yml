@@ -1,4 +1,3 @@
-dev_id: devnet
 # Chains config (spc and chainlets)
 spc_chain_id: spc-{{ dev_id }}-1
 spc_volume_size: 40Gi
@@ -17,8 +16,8 @@ metrics_enabled: false
 statesync_enabled: false
 
 # SSC
-ssc_enabled: true
 ssc:
+  enabled: true
   chain_id: "ssc-{{ dev_id }}-1"
   denom: "utsaga"
   rpc: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
