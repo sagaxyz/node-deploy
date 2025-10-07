@@ -1,0 +1,24 @@
+# SSC Configuration
+ssc_enabled: false
+ssc_version: "0.5.0-alpha.2"
+ssc_mode: "{{ mode }}"
+# Hardcoded values are now used directly in templates
+
+# SSC Resources
+ssc_resources:
+  requests:
+    memory: "512Mi"
+    cpu: "0.2"
+  limits:
+    memory: "1Gi"
+    cpu: "0.5"
+
+# SSC Storage - using hardcoded saga-default storage class
+
+# SSC Network
+ssc_external_address: "127.0.0.1"
+ssc_additional_args: ""
+
+# SSC Genesis Download
+ssc_genesis_download_timeout: 300
+

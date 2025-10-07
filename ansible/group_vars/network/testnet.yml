@@ -20,10 +20,14 @@ statesync_rpc_domains:
   - st1.sagarpc.io
   - stsrv1.sagarpc.io
 
-# SSC
+# SSC (disabled by default for testnet)
 ssc:
+  enabled: false
   chain_id: "ssc-testnet-3"
   denom: "utsaga"
   rpc: "https://testnet2-keplr.sagarpc.io:443"
   consumer_gas_price: "0.01"
   grpc: "https://testnet2-grpc.sagarpc.io:9090"
+  genesis_url: ""
+  volume_size: "25Gi"
+  key_password: "{{ keychain_password }}"

@@ -17,8 +17,12 @@ statesync_enabled: false
 
 # SSC
 ssc:
+  enabled: true
   chain_id: "ssc-{{ dev_id }}-1"
   denom: "utsaga"
   rpc: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
   grpc: "http://ssc.sagasrv-ssc.svc.cluster.local:9090"
   consumer_gas_price: "0.01"
+  genesis_url: "https://saga-public-assets.s3.us-east-1.amazonaws.com/genesis/devnet/ssc-devnet-1_genesis.json"
+  volume_size: "40Gi"
+  key_password: "{{ keychain_password }}"

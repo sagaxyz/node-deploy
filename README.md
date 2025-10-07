@@ -45,7 +45,18 @@ cd ansible
 ansible-playbook -e @<inventory_file> -e <secrets_file> --vault-password-file <vault_password_file> playbooks/deploy.yml
 ```
 
-This will install all the roles in the right order: metrics (if enabled), ingress-nginx (if `expose_p2p`), spc and controller. The latter is responsible to spinup all the chainlets once SPC is in sync.
+This will install all the roles in the right order: metrics (if enabled), ingress-nginx (if `expose_p2p`), spc, ssc (if enabled), and controller. The latter is responsible to spinup all the chainlets once SPC is in sync.
+
+### SSC (Saga Security Chain)
+
+The SSC role is optional and controlled by the `ssc.enabled` variable:
+- **Enabled by default**: Only for devnet environment
+- **Disabled by default**: For mainnet and testnet environments
+- **Features**:
+  - Downloads genesis file from S3 during initialization
+  - Generates validator keys automatically
+  - Provides RPC (26657), P2P (26656), gRPC (9090), and metrics (26660) endpoints
+  - Uses persistent storage for blockchain data
 
 The playbooks are idempotent, so they can be run as much as possible with no negative consequences. It is possible to just redeploy a single component using `--tags <role>`. E.g.: `--tags controller`.
 

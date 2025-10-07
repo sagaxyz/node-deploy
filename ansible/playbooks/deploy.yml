@@ -34,4 +34,5 @@
     - { role: metrics, tags: [metrics], when: metrics_enabled }
     - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
     - { role: spc, tags: [spc] }
+    - { role: ssc, tags: [ssc], when: ssc.enabled | default(ssc_enabled | default(false)) }
     - { role: controller, tags: [controller] }

@@ -1,0 +1,115 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssc-data-pvc
+  namespace: sagasrv-ssc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ ssc.volume_size }}
+  storageClassName: saga-default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ssc-init-script
+  namespace: sagasrv-ssc
+data:
+  init-validator.sh: |
+    {{ lookup('template', 'init-validator.sh.j2') | indent(4) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssc
+  namespace: sagasrv-ssc
+  labels:
+    app: ssc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssc
+  template:
+    metadata:
+      labels:
+        app: ssc
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "26660"
+    spec:
+      initContainers:
+        - name: init-validator
+          image: sagaxyz/ssc:0.5.0-alpha.2
+          command: ["/scripts/init-validator.sh"]
+          env:
+            - name: KEY_PASSWORD
+              value: "{{ ssc.key_password }}"
+            - name: VALIDATOR_MNEMONIC
+              value: "{{ validator_mnemonic }}"
+          volumeMounts:
+            - name: ssc-data
+              mountPath: /root/.ssc
+            - name: init-script
+              mountPath: /scripts
+      containers:
+        - name: ssc
+          image: sagaxyz/ssc:0.5.0-alpha.2
+          command: ["sscd", "start", "--home", "/root/.ssc", "--rpc.laddr", "tcp://0.0.0.0:26657", "--p2p.laddr", "tcp://0.0.0.0:26656", "--grpc.address", "0.0.0.0:9090"]
+          ports:
+            - containerPort: 26657
+              name: rpc
+            - containerPort: 26656
+              name: p2p
+            - containerPort: 9090
+              name: grpc
+            - containerPort: 26660
+              name: metrics
+          volumeMounts:
+            - name: ssc-data
+              mountPath: /root/.ssc
+          resources:
+            requests:
+              memory: "{{ ssc_resources.requests.memory }}"
+              cpu: "{{ ssc_resources.requests.cpu }}"
+            limits:
+              memory: "{{ ssc_resources.limits.memory }}"
+              cpu: "{{ ssc_resources.limits.cpu }}"
+          # Health checks removed - SSC may not expose health endpoint
+      volumes:
+        - name: ssc-data
+          persistentVolumeClaim:
+            claimName: ssc-data-pvc
+        - name: init-script
+          configMap:
+            name: ssc-init-script
+            defaultMode: 0755
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssc
+  namespace: sagasrv-ssc
+  labels:
+    app: ssc
+spec:
+  type: ClusterIP
+  ports:
+    - name: rpc
+      port: 26657
+      targetPort: 26657
+    - name: p2p
+      port: 26656
+      targetPort: 26656
+    - name: grpc
+      port: 9090
+      targetPort: 9090
+    - name: metrics
+      port: 26660
+      targetPort: 26660
+  selector:
+    app: ssc
