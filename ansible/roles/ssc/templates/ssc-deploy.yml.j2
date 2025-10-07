@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ssc-data
+  name: ssc-data-pvc
   namespace: sagasrv-ssc
 spec:
   accessModes:
@@ -19,27 +19,7 @@ metadata:
   namespace: sagasrv-ssc
 data:
   init-validator.sh: |
-    #!/bin/sh
-    if [ ! -f /root/.ssc/config/priv_validator_key.json ]; then
-      echo "Initializing validator..."
-      sscd init ssc-validator --home /root/.ssc --chain-id {{ ssc.chain_id }} --default-denom {{ ssc.denom }}
-      
-      echo "Adding validator account..."
-      echo "$VALIDATOR_MNEMONIC" | sscd keys add ssc-validator --home /root/.ssc --keyring-backend test --recover --no-backup
-      
-      echo "Adding genesis account..."
-      sscd add-genesis-account ssc-validator 1000000000000{{ ssc.denom }} --home /root/.ssc --keyring-backend test
-      
-      echo "Creating gentx..."
-      sscd genesis gentx ssc-validator 1000000000{{ ssc.denom }} --home /root/.ssc --keyring-backend test --chain-id {{ ssc.chain_id }}
-      
-      echo "Collecting gentxs..."
-      sscd genesis collect-gentxs --home /root/.ssc
-      
-      echo "Validator initialization complete"
-    else
-      echo "Validator already initialized"
-    fi
+    {{ lookup('template', 'init-validator.sh.j2') | indent(4) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -102,7 +82,7 @@ spec:
       volumes:
         - name: ssc-data
           persistentVolumeClaim:
-            claimName: ssc-data
+            claimName: ssc-data-pvc
         - name: init-script
           configMap:
             name: ssc-init-script
