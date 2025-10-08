@@ -4,7 +4,6 @@
 
 # Source shared utilities
 source "$(dirname "${BASH_SOURCE[0]}")/shared.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/controller.sh"
 
 chainlets_print_usage() {
     log "Usage: cluster.sh chainlets SUBCOMMAND"

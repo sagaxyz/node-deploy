@@ -102,6 +102,7 @@ chainlet_wipe() {
     if redeploy_chainlet_in_namespace "$namespace"; then
         success "✅ Deployment deleted successfully"
     else
+        controller_scale_up
         exit 1
     fi
 
@@ -112,6 +113,7 @@ chainlet_wipe() {
         success "✅ PVC '$pvc_name' deleted successfully"
     else
         error "Failed to delete PVC '$pvc_name'"
+        controller_scale_up
         exit 1
     fi
 
