@@ -4,6 +4,7 @@
 
 # Source shared utilities
 source "$(dirname "${BASH_SOURCE[0]}")/shared.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/controller.sh"
 
 chainlet_print_usage() {
     log "Usage: cluster.sh chainlet SUBCOMMAND [OPTIONS]"
@@ -13,6 +14,7 @@ chainlet_print_usage() {
     log "SUBCOMMANDS:"
     log "  restart <identifier>           Restart chainlet pods by namespace or chain_id"
     log "  redeploy <identifier>          Redeploy chainlet deployment by namespace or chain_id"
+    log "  wipe <identifier>              Wipe chainlet data (delete PVC) and redeploy"
     log "  logs <identifier>              Follow logs for chainlet by namespace or chain_id"
     log "  status <identifier>            Show sync status for a specific chainlet"
     log "  expand-pvc <identifier> [%]    Expand chainlet PVC by percentage (default: 20%)"
@@ -22,6 +24,8 @@ chainlet_print_usage() {
     log "  cluster.sh chainlet restart my_chain_id                # Restart using chain_id (converts to saga-my-chain-id)"
     log "  cluster.sh chainlet redeploy saga-my-chain             # Redeploy using full namespace"
     log "  cluster.sh chainlet redeploy my_chain_id               # Redeploy using chain_id"
+    log "  cluster.sh chainlet wipe saga-my-chain                 # Wipe data and redeploy using full namespace"
+    log "  cluster.sh chainlet wipe my_chain_id                   # Wipe data and redeploy using chain_id"
     log "  cluster.sh chainlet logs saga-my-chain                 # Follow logs using full namespace"
     log "  cluster.sh chainlet logs my_chain_id                   # Follow logs using chain_id"
     log "  cluster.sh chainlet status saga-my-chain               # Check specific chainlet status"
@@ -69,6 +73,51 @@ chainlet_redeploy() {
     else
         exit 1
     fi
+}
+
+chainlet_wipe() {
+    local identifier="$1"
+    if [ -z "$identifier" ]; then
+        error "wipe command requires an identifier (namespace or chain_id)"
+        echo ""
+        chainlet_print_usage
+        exit 1
+    fi
+
+    local namespace=$(get_namespace "$identifier")
+    local pvc_name="chainlet-pvc"
+
+    log "Wiping chainlet data in namespace: $namespace"
+    log ""
+    if ! confirm_action "⚠️⚠️⚠️ This will delete ALL the chainlet data in namespace '$namespace' and will cause ${BOLD}DATA LOSS${NC}"; then
+        exit 0
+    fi
+
+    # Scale down the controller deployment to zero replicas
+    log "Disabling controller"
+    controller_scale_down
+
+    # Deleting chainlet deployment
+    log "Deleting chainlet deployment in namespace '$namespace'"
+    if redeploy_chainlet_in_namespace "$namespace"; then
+        success "✅ Deployment deleted successfully"
+    else
+        exit 1
+    fi
+
+    # Delete the PVC
+    log "Deleting PVC '$pvc_name' in namespace '$namespace'"
+    log_and_execute_cmd $KUBECTL delete pvc "$pvc_name" -n "$namespace"
+    if [ $? -eq 0 ]; then
+        success "✅ PVC '$pvc_name' deleted successfully"
+    else
+        error "Failed to delete PVC '$pvc_name'"
+        exit 1
+    fi
+
+    # Scale up the controller deployment to one replica
+    controller_scale_up
+    log "New deployment will be created automatically by the controller with fresh data"
 }
 
 
@@ -128,7 +177,7 @@ chainlet_expand_pvc() {
         chainlet_print_usage
         exit 1
     fi
-    
+
     local namespace=$(get_namespace "$identifier")
     local pvc_name="chainlet-pvc"
 
@@ -194,6 +243,9 @@ handle_chainlet_command() {
             ;;
         redeploy)
             chainlet_redeploy "$1"
+            ;;
+        wipe)
+            chainlet_wipe "$1"
             ;;
         logs)
             chainlet_logs "$1"
