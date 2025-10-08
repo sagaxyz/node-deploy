@@ -70,7 +70,7 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 ### Deploy the new cluster in fullnode mode
 - Make sure `mode: fullnode` in your inventory file.
 - Follow the [Deploy Saga Pegasus](#deploy-saga-pegasus) instructions
-- Make sure the chains are in sync: `scripts/cluster.sh chainlets-status [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
+- Make sure the chains are in sync: `scripts/cluster.sh chainlets status [--kubeconfig <kubeconfig_file>]`. It will print a success or failure message at the end.
 
 ### Scale down the old cluster
 **After making sure the new cluster is in sync**
@@ -94,10 +94,10 @@ The controller will scale chainlets back up and the validator will be restored.
 - Make sure you have the `validator_mnemonic` correctly set
 - Wipe out SPC: `kubectl delete deployment spc -n sagasrv-spc && kubectl delete pvc spc-pvc -n sagasrv-spc`
 - Redeploy ([Deploy](#deploy))
-- Restart the controller: `scripts/cluster.sh restart-controller`
-- Redeploy every chainlet deleting the deployment and having the controller redeploy it as validator: `scripts/cluster.sh redeploy-all-chainlets` and then execute the commands in the output.
+- Restart the controller: `scripts/cluster.sh controller restart`
+- Redeploy every chainlet deleting the deployment and having the controller redeploy it as validator: `scripts/cluster.sh chainlets redeploy` and then execute the commands in the output.
 
-Now you should be able to see all the chainlets restarting: `kubectl get pods -A | grep chainlet`. Check the status with `scripts/cluster.sh chainlets-status` making sure all of them are restarting and getting in sync.
+Now you should be able to see all the chainlets restarting: `kubectl get pods -A | grep chainlet`. Check the status with `scripts/cluster.sh chainlets status` making sure all of them are restarting and getting in sync.
 
 ## Run a devnet cluster
 Devnet cluster is meant for development. It can run a single validator cluster. It is deployed like every other cluster (just `network: devnet`). By default it comes without metrics and does not expose p2p nor other services. For this reasons, transactions will require port-forwarding. E.g.:
@@ -118,21 +118,44 @@ NOTE: evm transaction will require port forward of port `8545` instead of `26657
 
 ## Utils
 ### cluster.sh
-Collection of util commands to interact with the cluster. It supports the common operations:
-- scale-down-controller           Scale down the controller deployment"
-- scale-up-controller             Scale up the controller deployment"
-- restart-controller              Restart controller pod"
-- restart-chainlet <identifier>   Restart chainlet pods by namespace or chain_id"
-- redeploy-chainlet <identifier>  Redeploy chainlet deployment by namespace or chain_id"
-- redeploy-all-chainlets          Redeploy all chainlet deployments in saga-* namespaces"
-- chainlets-status                Show status of all chainlets"
-- logs <identifier>               Follow chainlet logs by namespace or chain_id
-- chainlet-status <identifier>    Show sync status for a specific chainlet
-- expand-pvc <identifier> [%]     Expand chainlet PVC by percentage (default: 20) 
-- install-completion              Install bash completion for cluster.sh
+Collection of util commands to interact with the cluster. The script is organized into main commands with subcommands for better organization:
 
+#### Controller Commands
+- `controller down`               Scale down the controller deployment
+- `controller up`                 Scale up the controller deployment  
+- `controller restart`            Restart controller pod
 
-Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context, than the current. Use `scripts/cluster.sh --help` for usage.
+#### Individual Chainlet Commands
+- `chainlet restart <identifier>`     Restart chainlet pods by namespace or chain_id
+- `chainlet redeploy <identifier>`    Redeploy chainlet deployment by namespace or chain_id
+- `chainlet logs <identifier>`        Follow chainlet logs by namespace or chain_id
+- `chainlet status <identifier>`      Show sync status for a specific chainlet
+- `chainlet expand-pvc <identifier> [%]`  Expand chainlet PVC by percentage (default: 20%)
+
+#### Bulk Chainlets Commands
+- `chainlets status`              Show status of all chainlets
+- `chainlets redeploy`            Redeploy all chainlet deployments in saga-* namespaces
+
+#### Other Commands
+- `install-completion`            Install bash completion for cluster.sh
+
+**Usage Examples:**
+```bash
+# Controller operations
+scripts/cluster.sh controller down
+scripts/cluster.sh controller restart
+
+# Individual chainlet operations  
+scripts/cluster.sh chainlet restart saga-my-chain
+scripts/cluster.sh chainlet logs my_chain_id
+scripts/cluster.sh chainlet status saga-my-chain
+
+# Bulk operations on all chainlets
+scripts/cluster.sh chainlets status
+scripts/cluster.sh chainlets redeploy
+```
+
+Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context than the current. Use `scripts/cluster.sh --help` or `scripts/cluster.sh COMMAND --help` for detailed usage information.
 
 **Make it faster**
 - Add alias `c=<your_path>/scripts/cluster.sh` to the file loaded on start of the terminal (e.g. `~/.bashrc`, `~/.zshrc`)

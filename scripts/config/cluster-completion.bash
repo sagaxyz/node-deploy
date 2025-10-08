@@ -2,13 +2,22 @@
 # Bash completion for cluster.sh script
 
 _cluster_completion() {
-    local cur prev opts commands
+    local cur prev opts main_commands controller_subcommands chainlet_subcommands chainlets_subcommands
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    # Available commands
-    commands="scale-down-controller scale-up-controller restart-controller restart-chainlet redeploy-chainlet redeploy-all-chainlets logs chainlet-status expand-pvc chainlets-status install-completion"
+    # Available main commands
+    main_commands="controller chainlet chainlets install-completion"
+    
+    # Controller subcommands
+    controller_subcommands="down up restart"
+    
+    # Chainlet subcommands
+    chainlet_subcommands="restart redeploy logs status expand-pvc"
+    
+    # Chainlets subcommands
+    chainlets_subcommands="status redeploy"
     
     # Available options
     opts="--kubeconfig -h --help"
@@ -20,52 +29,77 @@ _cluster_completion() {
         return 0
     fi
 
-    # Handle command-specific completions
-    case "${prev}" in
-        restart-chainlet|redeploy-chainlet|logs|chainlet-status|expand-pvc)
-            # For chainlet commands, complete with both namespaces and chainids
-            if command -v kubectl >/dev/null 2>&1; then
-                # Get saga-* namespaces (full namespace names)
-                local namespaces=$(kubectl get namespaces -o name 2>/dev/null | grep "namespace/saga-" | cut -d/ -f2 2>/dev/null)
-                
-                # Convert namespaces to chainids (remove saga- prefix and convert - to _)
-                local chainids=""
-                for ns in $namespaces; do
-                    if [[ $ns == saga-* ]]; then
-                        # Remove saga- prefix and convert - to _
-                        local chainid="${ns#saga-}"
-                        chainid="${chainid//-/_}"
-                        chainids="$chainids $chainid"
-                    fi
-                done
-                
-                # Combine both namespace and chainid completions
-                local all_completions="$namespaces $chainids"
-                COMPREPLY=($(compgen -W "${all_completions}" -- "${cur}"))
-            fi
-            return 0
-            ;;
-    esac
-
-    # If we're completing the first argument (after script name)
-    if [[ ${COMP_CWORD} -eq 1 ]]; then
-        # Complete with options and commands
-        COMPREPLY=($(compgen -W "${opts} ${commands}" -- "${cur}"))
-        return 0
-    fi
-
-    # If we have an option flag, complete with commands
-    local has_command=false
-    for word in "${COMP_WORDS[@]:1}"; do
-        if [[ " ${commands} " =~ " ${word} " ]]; then
-            has_command=true
+    # Find the main command in the current command line
+    local main_cmd=""
+    local main_cmd_index=0
+    for ((i=1; i<${#COMP_WORDS[@]}; i++)); do
+        if [[ " ${main_commands} " =~ " ${COMP_WORDS[i]} " ]]; then
+            main_cmd="${COMP_WORDS[i]}"
+            main_cmd_index=$i
             break
         fi
     done
 
-    if [[ ${has_command} == false ]]; then
-        # No command found yet, suggest commands
-        COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
+    # Handle command-specific completions based on context
+    case "${main_cmd}" in
+        controller)
+            # If we're right after 'controller', suggest subcommands
+            if [[ ${COMP_CWORD} -eq $((main_cmd_index + 1)) ]]; then
+                COMPREPLY=($(compgen -W "${controller_subcommands} -h --help help" -- "${cur}"))
+                return 0
+            fi
+            ;;
+        chainlet)
+            # If we're right after 'chainlet', suggest subcommands
+            if [[ ${COMP_CWORD} -eq $((main_cmd_index + 1)) ]]; then
+                COMPREPLY=($(compgen -W "${chainlet_subcommands} -h --help help" -- "${cur}"))
+                return 0
+            fi
+            
+            # Handle chainlet subcommand argument completion
+            local chainlet_subcmd="${COMP_WORDS[$((main_cmd_index + 1))]}"
+            case "${chainlet_subcmd}" in
+                restart|redeploy|logs|status|expand-pvc)
+                    # For chainlet commands that need identifiers, complete with both namespaces and chainids
+                    if [[ ${COMP_CWORD} -eq $((main_cmd_index + 2)) ]]; then
+                        if command -v kubectl >/dev/null 2>&1; then
+                            # Get saga-* namespaces (full namespace names)
+                            local namespaces=$(kubectl get namespaces -o name 2>/dev/null | grep "namespace/saga-" | cut -d/ -f2 2>/dev/null)
+                            
+                            # Convert namespaces to chainids (remove saga- prefix and convert - to _)
+                            local chainids=""
+                            for ns in $namespaces; do
+                                if [[ $ns == saga-* ]]; then
+                                    # Remove saga- prefix and convert - to _
+                                    local chainid="${ns#saga-}"
+                                    chainid="${chainid//-/_}"
+                                    chainids="$chainids $chainid"
+                                fi
+                            done
+                            
+                            # Combine both namespace and chainid completions
+                            local all_completions="$namespaces $chainids"
+                            COMPREPLY=($(compgen -W "${all_completions}" -- "${cur}"))
+                        fi
+                        return 0
+                    fi
+                    ;;
+            esac
+            ;;
+        chainlets)
+            # If we're right after 'chainlets', suggest subcommands
+            if [[ ${COMP_CWORD} -eq $((main_cmd_index + 1)) ]]; then
+                COMPREPLY=($(compgen -W "${chainlets_subcommands} -h --help help" -- "${cur}"))
+                return 0
+            fi
+            ;;
+    esac
+
+    # If we're completing the first argument (after script name and options)
+    if [[ ${COMP_CWORD} -eq 1 ]] || [[ -z "${main_cmd}" ]]; then
+        # Complete with options and main commands
+        COMPREPLY=($(compgen -W "${opts} ${main_commands}" -- "${cur}"))
+        return 0
     fi
 
     return 0
