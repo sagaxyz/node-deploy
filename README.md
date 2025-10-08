@@ -136,6 +136,9 @@ Collection of util commands to interact with the cluster. The script is organize
 - `chainlets status`              Show status of all chainlets
 - `chainlets redeploy`            Redeploy all chainlet deployments in saga-* namespaces
 
+#### Validator Commands
+- `validator unjail <identifier>` Unjail validator by namespace or chain_id
+
 #### Other Commands
 - `install-completion`            Install bash completion for cluster.sh
 
@@ -153,6 +156,10 @@ scripts/cluster.sh chainlet status saga-my-chain
 # Bulk operations on all chainlets
 scripts/cluster.sh chainlets status
 scripts/cluster.sh chainlets redeploy
+
+# Validator operations
+scripts/cluster.sh validator unjail saga-my-chain
+scripts/cluster.sh validator unjail my_chain_id
 ```
 
 Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context than the current. Use `scripts/cluster.sh --help` or `scripts/cluster.sh COMMAND --help` for detailed usage information.
