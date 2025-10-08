@@ -2,13 +2,13 @@
 # Bash completion for cluster.sh script
 
 _cluster_completion() {
-    local cur prev opts main_commands controller_subcommands chainlet_subcommands chainlets_subcommands
+    local cur prev opts main_commands controller_subcommands chainlet_subcommands chainlets_subcommands validator_subcommands
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Available main commands
-    main_commands="controller chainlet chainlets install-completion"
+    main_commands="controller chainlet chainlets validator install-completion"
     
     # Controller subcommands
     controller_subcommands="down up restart"
@@ -18,6 +18,9 @@ _cluster_completion() {
     
     # Chainlets subcommands
     chainlets_subcommands="status redeploy"
+
+    # Validator subcommands
+    validator_subcommands="unjail"
     
     # Available options
     opts="--kubeconfig -h --help"
@@ -92,6 +95,43 @@ _cluster_completion() {
                 COMPREPLY=($(compgen -W "${chainlets_subcommands} -h --help help" -- "${cur}"))
                 return 0
             fi
+            ;;
+        validator)
+            # If we're right after 'validator', suggest subcommands
+            if [[ ${COMP_CWORD} -eq $((main_cmd_index + 1)) ]]; then
+                COMPREPLY=($(compgen -W "${validator_subcommands} -h --help help" -- "${cur}"))
+                return 0
+            fi
+
+            # Handle validator subcommand argument completion
+            local validator_subcmd="${COMP_WORDS[$((main_cmd_index + 1))]}"
+            case "${validator_subcmd}" in
+                unjail)
+                    # For validator commands that need identifiers, complete with both namespaces and chainids
+                    if [[ ${COMP_CWORD} -eq $((main_cmd_index + 2)) ]]; then
+                        if command -v kubectl >/dev/null 2>&1; then
+                            # Get saga-* namespaces (full namespace names)
+                            local namespaces=$(kubectl get namespaces -o name 2>/dev/null | grep "namespace/saga-" | cut -d/ -f2 2>/dev/null)
+
+                            # Convert namespaces to chainids (remove saga- prefix and convert - to _)
+                            local chainids=""
+                            for ns in $namespaces; do
+                                if [[ $ns == saga-* ]]; then
+                                    # Remove saga- prefix and convert - to _
+                                    local chainid="${ns#saga-}"
+                                    chainid="${chainid//-/_}"
+                                    chainids="$chainids $chainid"
+                                fi
+                            done
+
+                            # Combine both namespace and chainid completions
+                            local all_completions="$namespaces $chainids"
+                            COMPREPLY=($(compgen -W "${all_completions}" -- "${cur}"))
+                        fi
+                        return 0
+                    fi
+                    ;;
+            esac
             ;;
     esac
 
