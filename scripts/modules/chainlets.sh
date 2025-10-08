@@ -40,7 +40,7 @@ chainlets_redeploy() {
     # Check if controller is running
     if ! $KUBECTL get pods -n sagasrv-controller -l app=controller | grep -q "Running"; then
         error "Controller is not running. Please ensure controller is up before redeploying chainlets."
-        log "Run: cluster.sh controller scale-up"
+        log "Run: cluster.sh controller up"
         exit 1
     fi
 

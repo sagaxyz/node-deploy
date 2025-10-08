@@ -24,22 +24,6 @@ print_usage() {
     log "  install-completion   Install bash completion for this script"
     log ""
     log "Use '$0 COMMAND --help' to see subcommands for each command."
-    log ""
-    log "EXAMPLES:"
-    log "  $0 controller scale-down                        # Scale down controller"
-    log "  $0 controller scale-up                          # Scale up controller"
-    log "  $0 controller restart                           # Restart controller pod"
-    log "  $0 chainlet restart saga-my-chain               # Restart chainlet using full namespace"
-    log "  $0 chainlet restart my_chain_id                 # Restart chainlet using chain_id"
-    log "  $0 chainlet redeploy saga-my-chain              # Redeploy chainlet using full namespace"
-    log "  $0 chainlet redeploy saga-my-chain              # Redeploy chainlet using full namespace"
-    log "  $0 chainlet logs saga-my-chain                  # Follow chainlet logs"
-    log "  $0 chainlet status saga-my-chain                # Check specific chainlet status"
-    log "  $0 chainlets status                             # Show all chainlets status"
-    log "  $0 chainlets redeploy                           # Redeploy all chainlets"
-    log "  $0 chainlet expand-pvc saga-my-chain            # Expand PVC by 20% (default)"
-    log "  $0 chainlet expand-pvc my_chain_id 50           # Expand PVC by 50%"
-    log "  $0 install-completion                           # Install bash completion"
 }
 
 # Parse command line arguments

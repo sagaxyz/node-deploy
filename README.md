@@ -121,8 +121,8 @@ NOTE: evm transaction will require port forward of port `8545` instead of `26657
 Collection of util commands to interact with the cluster. The script is organized into main commands with subcommands for better organization:
 
 #### Controller Commands
-- `controller scale-down`         Scale down the controller deployment
-- `controller scale-up`           Scale up the controller deployment  
+- `controller down`               Scale down the controller deployment
+- `controller up`                 Scale up the controller deployment  
 - `controller restart`            Restart controller pod
 
 #### Individual Chainlet Commands
@@ -142,7 +142,7 @@ Collection of util commands to interact with the cluster. The script is organize
 **Usage Examples:**
 ```bash
 # Controller operations
-scripts/cluster.sh controller scale-down
+scripts/cluster.sh controller down
 scripts/cluster.sh controller restart
 
 # Individual chainlet operations  

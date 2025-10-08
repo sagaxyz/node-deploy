@@ -11,7 +11,7 @@ _cluster_completion() {
     main_commands="controller chainlet chainlets install-completion"
     
     # Controller subcommands
-    controller_subcommands="scale-down scale-up restart"
+    controller_subcommands="down up restart"
     
     # Chainlet subcommands
     chainlet_subcommands="restart redeploy logs status expand-pvc"

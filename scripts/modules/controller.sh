@@ -11,13 +11,13 @@ controller_print_usage() {
     log "Controller management commands"
     log ""
     log "SUBCOMMANDS:"
-    log "  scale-down    Scale down the controller deployment"
-    log "  scale-up      Scale up the controller deployment"
-    log "  restart       Restart controller pod"
+    log "  down      Scale down the controller deployment"
+    log "  up        Scale up the controller deployment"
+    log "  restart   Restart controller pod"
     log ""
     log "EXAMPLES:"
-    log "  cluster.sh controller scale-down"
-    log "  cluster.sh controller scale-up"
+    log "  cluster.sh controller down"
+    log "  cluster.sh controller up"
     log "  cluster.sh controller restart"
 }
 
@@ -25,7 +25,7 @@ controller_scale_down() {
     log "Scaling down controller..."
     log_and_execute_cmd $KUBECTL scale deployment/controller -n sagasrv-controller --replicas=0
     if [ $? -eq 0 ]; then
-        success "Controller scaled down successfully. Don't forget to run 'cluster.sh controller scale-up'"
+        success "Controller scaled down successfully. Don't forget to run 'cluster.sh controller up'"
     else
         error "Failed to scale down controller"
         exit 1
@@ -61,10 +61,10 @@ handle_controller_command() {
     local subcommand="$1"
     
     case "$subcommand" in
-        scale-down)
+        down)
             controller_scale_down
             ;;
-        scale-up)
+        up)
             controller_scale_up
             ;;
         restart)
