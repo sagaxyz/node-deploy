@@ -14,7 +14,7 @@ _cluster_completion() {
     controller_subcommands="down up restart"
     
     # Chainlet subcommands
-    chainlet_subcommands="restart redeploy logs status expand-pvc"
+    chainlet_subcommands="restart redeploy wipe logs status expand-pvc"
     
     # Chainlets subcommands
     chainlets_subcommands="status redeploy"
@@ -62,7 +62,7 @@ _cluster_completion() {
             # Handle chainlet subcommand argument completion
             local chainlet_subcmd="${COMP_WORDS[$((main_cmd_index + 1))]}"
             case "${chainlet_subcmd}" in
-                restart|redeploy|logs|status|expand-pvc)
+                restart|redeploy|wipe|logs|status|expand-pvc)
                     # For chainlet commands that need identifiers, complete with both namespaces and chainids
                     if [[ ${COMP_CWORD} -eq $((main_cmd_index + 2)) ]]; then
                         if command -v kubectl >/dev/null 2>&1; then

@@ -76,13 +76,13 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 **After making sure the new cluster is in sync**
 - Switch context to old EKS cluster (or pass `--kubeconfig <kubeconfig_file>` to the kubectl commands)
 - Scale down spc: `kubectl scale deployment spc -n sagasrv-spc --replicas=0`
-- Scale down controller `kubectl scale deployment/saga-controller -n sagasrv-controller --replicas=0`
+- Scale down controller: `scripts/cluster.sh controller down`
 - Scale down chainlets: `kubectl get pods -A | grep chainlet | awk '{print $1}' | xargs -I{} kubectl -n {} scale deployment/chainlet --replicas=0`
 - Verify all the chainlets are terminated: `kubectl get pods -A | grep chainlet` should be empty
 
 **If something goes wrong, scale SPC and Controller back up**
 - SPC: `kubectl scale deployment spc -n sagasrv-spc --replicas=1`
-- Controller: `kubectl scale deployment/saga-controller -n sagasrv-controller --replicas=1`
+- Controller: `scripts/cluster.sh controller up`
 The controller will scale chainlets back up and the validator will be restored.
 
 ### Redeploy the new cluster in validator mode
@@ -128,6 +128,7 @@ Collection of util commands to interact with the cluster. The script is organize
 #### Individual Chainlet Commands
 - `chainlet restart <identifier>`     Restart chainlet pods by namespace or chain_id
 - `chainlet redeploy <identifier>`    Redeploy chainlet deployment by namespace or chain_id
+- `chainlet wipe <identifier>`        Wipe chainlet data (delete PVC) and redeploy
 - `chainlet logs <identifier>`        Follow chainlet logs by namespace or chain_id
 - `chainlet status <identifier>`      Show sync status for a specific chainlet
 - `chainlet expand-pvc <identifier> [%]`  Expand chainlet PVC by percentage (default: 20%)
@@ -150,6 +151,8 @@ scripts/cluster.sh controller restart
 
 # Individual chainlet operations  
 scripts/cluster.sh chainlet restart saga-my-chain
+scripts/cluster.sh chainlet redeploy saga-my-chain
+scripts/cluster.sh chainlet wipe saga-my-chain
 scripts/cluster.sh chainlet logs my_chain_id
 scripts/cluster.sh chainlet status saga-my-chain
 
