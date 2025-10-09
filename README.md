@@ -131,6 +131,7 @@ Collection of util commands to interact with the cluster. The script is organize
 - `chainlet wipe <identifier>`        Wipe chainlet data (delete PVC) and redeploy
 - `chainlet logs <identifier>`        Follow chainlet logs by namespace or chain_id
 - `chainlet status <identifier>`      Show sync status for a specific chainlet
+- `chainlet height <identifier>`      Show current block height for a specific chainlet
 - `chainlet expand-pvc <identifier> [%]`  Expand chainlet PVC by percentage (default: 20%)
 
 #### Bulk Chainlets Commands
@@ -155,6 +156,7 @@ scripts/cluster.sh chainlet redeploy saga-my-chain
 scripts/cluster.sh chainlet wipe saga-my-chain
 scripts/cluster.sh chainlet logs my_chain_id
 scripts/cluster.sh chainlet status saga-my-chain
+scripts/cluster.sh chainlet height saga-my-chain
 
 # Bulk operations on all chainlets
 scripts/cluster.sh chainlets status

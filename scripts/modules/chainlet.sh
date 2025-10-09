@@ -17,6 +17,7 @@ chainlet_print_usage() {
     log "  wipe <identifier>              Wipe chainlet data (delete PVC) and redeploy"
     log "  logs <identifier>              Follow logs for chainlet by namespace or chain_id"
     log "  status <identifier>            Show sync status for a specific chainlet"
+    log "  height <identifier>            Show current block height for a specific chainlet"
     log "  expand-pvc <identifier> [%]    Expand chainlet PVC by percentage (default: 20%)"
     log ""
     log "EXAMPLES:"
@@ -30,6 +31,8 @@ chainlet_print_usage() {
     log "  cluster.sh chainlet logs my_chain_id                   # Follow logs using chain_id"
     log "  cluster.sh chainlet status saga-my-chain               # Check specific chainlet status"
     log "  cluster.sh chainlet status my_chain_id                 # Check specific chainlet status using chain_id"
+    log "  cluster.sh chainlet height saga-my-chain               # Show block height using full namespace"
+    log "  cluster.sh chainlet height my_chain_id                 # Show block height using chain_id"
     log "  cluster.sh chainlet expand-pvc saga-my-chain           # Expand PVC by 20% (default)"
     log "  cluster.sh chainlet expand-pvc my_chain_id 50          # Expand PVC by 50%"
 }
@@ -168,6 +171,29 @@ chainlet_status() {
     esac
 }
 
+chainlet_height() {
+    local identifier="$1"
+    if [ -z "$identifier" ]; then
+        error "height command requires an identifier (namespace or chain_id)"
+        echo ""
+        chainlet_print_usage
+        exit 1
+    fi
+
+    local namespace=$(get_namespace "$identifier")
+    log "Getting block height for chainlet in namespace: $namespace"
+
+    # Get chainlet block height
+    height=$($KUBECTL exec -n "$namespace" deployment/chainlet -- sagaosd status 2>/dev/null | jq -r '.SyncInfo.latest_block_height' 2>/dev/null)
+
+    if [ -n "$height" ] && [ "$height" != "null" ] && [[ "$height" =~ ^[0-9]+$ ]]; then
+        log "Current block height: ${BOLD}$height${NC}"
+    else
+        error "Failed to get block height for chainlet in namespace '$namespace'"
+        exit 1
+    fi
+}
+
 
 chainlet_expand_pvc() {
     local identifier="$1"
@@ -254,6 +280,9 @@ handle_chainlet_command() {
             ;;
         status)
             chainlet_status "$1"
+            ;;
+        height)
+            chainlet_height "$1"
             ;;
         expand-pvc)
             chainlet_expand_pvc "$1" "$2"
