@@ -53,6 +53,31 @@ prometheus:
 
 alertmanager:
   enabled: {{ metrics_alertmanager_enabled | bool | lower }}
+{% if metrics_alertmanager_enabled %}
+{% if metrics_alertmanager_storage_class is defined %}
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: {{ metrics_alertmanager_storage_class }}
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ metrics_alertmanager_storage_size }}
+{% endif %}
+{% if metrics_alertmanager_config_enabled %}
+    configSecret: alertmanager-config
+{% endif %}
+{% endif %}
+
+defaultRules:
+  # Disable noisy alerts for components that don't expose metrics
+  rules:
+    kubeProxy: {{ metrics_default_rules_kube_proxy | bool | lower }}
+    kubeScheduler: {{ metrics_default_rules_kube_scheduler | bool | lower }}
+    etcd: {{ metrics_default_rules_etcd | bool | lower }}
+    kubeControllerManager: {{ metrics_default_rules_kube_controller_manager | bool | lower }}
 
 prometheus-node-exporter:
   tolerations:

@@ -3,6 +3,20 @@
     name: prometheus-community
     repo_url: https://prometheus-community.github.io/helm-charts
 
+- name: Create AlertManager configuration secret
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_file }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: alertmanager-config
+        namespace: "{{ metrics_namespace }}"
+      type: Opaque
+      data:
+        alertmanager.yaml: "{{ lookup('template', 'alertmanager-config.yml.j2') | b64encode }}"
+  when: metrics_alertmanager_enabled and metrics_alertmanager_config_enabled
+
 - name: Install/Upgrade kube-prometheus-stack
   kubernetes.core.helm:
     release_name: kube-prometheus-stack

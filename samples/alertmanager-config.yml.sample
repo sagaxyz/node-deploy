@@ -1,0 +1,119 @@
+# Sample AlertManager Configuration
+# Copy this to your inventory file and customize as needed
+
+# Enable AlertManager configuration (disabled by default)
+metrics_alertmanager_config_enabled: true
+
+# Global SMTP settings for email notifications
+metrics_alertmanager_global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@yourcompany.com'
+  smtp_auth_username: 'alerts@yourcompany.com'
+  smtp_auth_password: 'your-app-password'  # Use app password for Gmail
+  smtp_require_tls: true
+
+# Notification channels organized by severity
+metrics_alertmanager_channels:
+  critical:
+    # Slack notification for critical alerts
+    - name: critical-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/<some_secrets>'
+      channel: '#alerts-critical'
+      title: '🚨 CRITICAL: {{ "{{ .GroupLabels.alertname }}" }}'
+      text: |
+        {{ "{{ range .Alerts }}" }}
+        *Alert:* {{ "{{ .Annotations.alertname }}" }}
+        *Summary:* {{ "{{ .Annotations.summary }}" }}
+        *Description:* {{ "{{ .Annotations.description }}" }}
+        *Severity:* {{ "{{ .Labels.severity }}" }}
+        {{ "{{ end }}" }}
+    
+    # Email notification for critical alerts
+    - name: critical-email
+      type: email
+      to: ['admin@yourcompany.com', 'oncall@yourcompany.com']
+      subject: '🚨 CRITICAL ALERT: {{ "{{ .GroupLabels.alertname }}" }}'
+    
+    # PagerDuty for critical alerts (optional)
+    - name: critical-pagerduty
+      type: pagerduty
+      routing_key: 'your-pagerduty-integration-key'
+      description: 'Critical Saga Infrastructure Alert'
+
+  warning:
+    # Slack notification for warning alerts
+    - name: warning-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/<some_secrets>'
+      channel: '#alerts-warning'
+      title: '⚠️ WARNING: {{ "{{ .GroupLabels.alertname }}" }}'
+      text: |
+        {{ "{{ range .Alerts }}" }}
+        *Alert:* {{ "{{ .Annotations.alertname }}" }}
+        *Summary:* {{ "{{ .Annotations.summary }}" }}
+        *Severity:* {{ "{{ .Labels.severity }}" }}
+        {{ "{{ end }}" }}
+    
+    # Email notification for warning alerts
+    - name: warning-email
+      type: email
+      to: ['devops@yourcompany.com']
+      subject: '⚠️ WARNING: {{ "{{ .GroupLabels.alertname }}" }}'
+
+  info:
+    # Slack notification for info alerts
+    - name: info-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/<some_secrets>'
+      channel: '#alerts-info'
+      title: 'ℹ️ INFO: {{ "{{ .GroupLabels.alertname }}" }}'
+      text: |
+        {{ "{{ range .Alerts }}" }}
+        *Alert:* {{ "{{ .Annotations.alertname }}" }}
+        *Summary:* {{ "{{ .Annotations.summary }}" }}
+        {{ "{{ end }}" }}
+
+# Custom routing rules for specific alerts (optional)
+metrics_alertmanager_custom_routes:
+  # Route chainlet-specific alerts to a dedicated channel
+  - match:
+      alertname: ChainletDown
+    receiver: critical-alerts
+    group_wait: 10s
+    group_interval: 10s
+    repeat_interval: 30m
+  
+  # Route disk space alerts with different timing
+  - match:
+      alertname: NodeFilesystemSpaceFillingUp
+    receiver: warning-alerts
+    group_wait: 5m
+    repeat_interval: 2h
+
+# Inhibition rules to suppress redundant alerts (optional)
+metrics_alertmanager_inhibit_rules:
+  # Suppress warning alerts when critical alerts are firing for the same service
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ['alertname', 'cluster', 'service']
+  
+  # Suppress info alerts when warning or critical alerts are firing
+  - source_match:
+      severity: warning
+    target_match:
+      severity: info
+    equal: ['alertname', 'cluster', 'service']
+
+# Alternative webhook example (uncomment to use)
+# metrics_alertmanager_channels:
+#   critical:
+#     - name: critical-webhook
+#       type: webhook
+#       url: 'https://your-webhook-endpoint.com/alerts'
+#   warning:
+#     - name: warning-webhook
+#       type: webhook
+#       url: 'https://your-webhook-endpoint.com/alerts'
