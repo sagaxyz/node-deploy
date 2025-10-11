@@ -14,6 +14,7 @@ hub_chain_id: hub_5464111-1
 expose_p2p: true
 metrics_enabled: true
 statesync_enabled: true
+metrics_alertmanager_enabled: true
 
 # StateSync
 statesync_rpc_domains:
