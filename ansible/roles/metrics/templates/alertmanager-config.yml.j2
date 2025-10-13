@@ -1,0 +1,138 @@
+global:
+  {{ metrics_alertmanager_global | to_nice_yaml | indent(2) }}
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  routes:
+{% if metrics_alertmanager_custom_routes %}
+{% for route in metrics_alertmanager_custom_routes %}
+    - {{ route | to_nice_yaml | indent(6, first=False) }}
+{% endfor %}
+{% endif %}
+    # Route critical alerts
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+    # Route warning alerts  
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+    # Route info alerts
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 24h
+
+receivers:
+  - name: 'default-receiver'
+    # Default receiver (can be empty or have a catch-all notification)
+
+{% if metrics_alertmanager_channels.critical is defined %}
+  - name: 'critical-alerts'
+{% for channel in metrics_alertmanager_channels.critical %}
+{% if channel.type == 'slack' %}
+    slack_configs:
+      - api_url: '{{ channel.api_url }}'
+        channel: '{{ channel.channel }}'
+        title: '{{ channel.title }}'
+        text: '{{ channel.text }}'
+        send_resolved: true
+        color: 'danger'
+{% elif channel.type == 'email' %}
+    email_configs:
+      - to: {{ channel.to | to_json }}
+        subject: '{{ channel.subject }}'
+        body: |
+          {{ "{{ range .Alerts }}" }}
+          Alert: {{ "{{ .Annotations.alertname }}" }}
+          Summary: {{ "{{ .Annotations.summary }}" }}
+          Description: {{ "{{ .Annotations.description }}" }}
+          {{ "{{ end }}" }}
+{% elif channel.type == 'webhook' %}
+    webhook_configs:
+      - url: '{{ channel.url }}'
+        send_resolved: true
+{% elif channel.type == 'pagerduty' %}
+    pagerduty_configs:
+      - routing_key: '{{ channel.routing_key }}'
+        description: '{{ channel.description | default("Critical Alert") }}'
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if metrics_alertmanager_channels.warning is defined %}
+  - name: 'warning-alerts'
+{% for channel in metrics_alertmanager_channels.warning %}
+{% if channel.type == 'slack' %}
+    slack_configs:
+      - api_url: '{{ channel.api_url }}'
+        channel: '{{ channel.channel }}'
+        title: '{{ channel.title }}'
+        text: '{{ channel.text }}'
+        send_resolved: true
+        color: 'warning'
+{% elif channel.type == 'email' %}
+    email_configs:
+      - to: {{ channel.to | to_json }}
+        subject: '{{ channel.subject }}'
+        body: |
+          {{ "{{ range .Alerts }}" }}
+          Alert: {{ "{{ .Annotations.alertname }}" }}
+          Summary: {{ "{{ .Annotations.summary }}" }}
+          Description: {{ "{{ .Annotations.description }}" }}
+          {{ "{{ end }}" }}
+{% elif channel.type == 'webhook' %}
+    webhook_configs:
+      - url: '{{ channel.url }}'
+        send_resolved: true
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if metrics_alertmanager_channels.info is defined %}
+  - name: 'info-alerts'
+{% for channel in metrics_alertmanager_channels.info %}
+{% if channel.type == 'slack' %}
+    slack_configs:
+      - api_url: '{{ channel.api_url }}'
+        channel: '{{ channel.channel }}'
+        title: '{{ channel.title }}'
+        text: '{{ channel.text }}'
+        send_resolved: true
+        color: 'good'
+{% elif channel.type == 'email' %}
+    email_configs:
+      - to: {{ channel.to | to_json }}
+        subject: '{{ channel.subject }}'
+        body: |
+          {{ "{{ range .Alerts }}" }}
+          Alert: {{ "{{ .Annotations.alertname }}" }}
+          Summary: {{ "{{ .Annotations.summary }}" }}
+          Description: {{ "{{ .Annotations.description }}" }}
+          {{ "{{ end }}" }}
+{% elif channel.type == 'webhook' %}
+    webhook_configs:
+      - url: '{{ channel.url }}'
+        send_resolved: true
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if metrics_alertmanager_inhibit_rules %}
+inhibit_rules:
+{% for rule in metrics_alertmanager_inhibit_rules %}
+  - {{ rule | to_nice_yaml | indent(4, first=False) }}
+{% endfor %}
+{% endif %}

@@ -14,5 +14,77 @@ metrics_prometheus_scrape_interval: 30s
 metrics_prometheus_storage_class: saga-default
 metrics_prometheus_storage_size: 10Gi
 
+# ServiceMonitor configuration - disable scraping for components without metrics
+# These variables control both ServiceMonitors and their corresponding alert rules
+metrics_kube_proxy_enabled: false
+metrics_kube_scheduler_enabled: false
+metrics_kube_etcd_enabled: false
+metrics_kube_controller_manager_enabled: false
+
 # Alertmanager configuration
-metrics_alertmanager_enabled: true
+metrics_alertmanager_storage_class: "" # override to enable persistent storage (e.g.: "saga-default")
+metrics_alertmanager_storage_size: 2Gi
+
+# AlertManager notification channels configuration
+# Set to false to disable AlertManager configuration (uses default config)
+metrics_alertmanager_config_enabled: false
+
+# Global AlertManager settings
+metrics_alertmanager_global: {}
+# Example:
+# smtp_smarthost: 'localhost:587'
+# smtp_from: 'alertmanager@saga.com'
+# smtp_auth_username: ''
+# smtp_auth_password: ''
+# smtp_require_tls: true
+
+# Notification channels by severity
+# Each channel can be: slack, email, webhook, pagerduty, etc.
+metrics_alertmanager_channels: {}
+# Example:
+# critical:
+#   - name: critical-slack
+#     type: slack
+#     api_url: ''  # Set your Slack webhook URL
+#     channel: '#alerts-critical'
+#     title: 'Critical Alert - {{ "{{ .GroupLabels.alertname }}" }}'
+#     text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+#   - name: critical-email
+#     type: email
+#     to: ['admin@saga.com']
+#     subject: 'CRITICAL: {{ "{{ .GroupLabels.alertname }}" }}'
+
+# warning:
+#   - name: warning-slack
+#     type: slack
+#     api_url: ''  # Set your Slack webhook URL
+#     channel: '#alerts-warning'
+#     title: 'Warning Alert - {{ "{{ .GroupLabels.alertname }}" }}'
+#     text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+
+# info:
+#   - name: info-slack
+#     type: slack
+#     api_url: ''  # Set your Slack webhook URL
+#     channel: '#alerts-info'
+#     title: 'Info Alert - {{ "{{ .GroupLabels.alertname }}" }}'
+#     text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+
+# Custom routes for specific alerts
+metrics_alertmanager_custom_routes: []
+# Example:
+# - match:
+#     alertname: ChainletDown
+#   receiver: critical-alerts
+#   group_wait: 10s
+#   group_interval: 10s
+#   repeat_interval: 1h
+
+# Inhibition rules to suppress alerts
+metrics_alertmanager_inhibit_rules: []
+# Example:
+# - source_match:
+#     severity: critical
+#   target_match:
+#     severity: warning
+#   equal: ['alertname', 'cluster', 'service']

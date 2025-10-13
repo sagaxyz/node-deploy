@@ -14,6 +14,7 @@ hub_chain_id: hub_5464112-1
 expose_p2p: false
 metrics_enabled: false
 statesync_enabled: false
+metrics_alertmanager_enabled: false
 
 # SSC
 ssc:

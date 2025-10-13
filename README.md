@@ -173,3 +173,125 @@ Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context tha
 - Add alias `c=<your_path>/scripts/cluster.sh` to the file loaded on start of the terminal (e.g. `~/.bashrc`, `~/.zshrc`)
 - Run `c install-completion`
 - Enjoy autocomplete of commands, options, namespaces and chainids.
+
+## AlertManager Configuration
+
+AlertManager can be configured with custom notification channels based on alert severity. This is optional and disabled by default.
+
+### Enable AlertManager Configuration
+To enable AlertManager configuration, set in your inventory:
+```yaml
+metrics_alertmanager_config_enabled: true
+```
+
+### Notification Channels by Severity
+Configure different notification channels for each severity level:
+
+```yaml
+metrics_alertmanager_channels:
+  critical:
+    - name: critical-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+      channel: '#alerts-critical'
+      title: 'Critical Alert - {{ "{{ .GroupLabels.alertname }}" }}'
+      text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+    - name: critical-email
+      type: email
+      to: ['admin@yourcompany.com']
+      subject: 'CRITICAL: {{ "{{ .GroupLabels.alertname }}" }}'
+
+  warning:
+    - name: warning-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+      channel: '#alerts-warning'
+      title: 'Warning Alert - {{ "{{ .GroupLabels.alertname }}" }}'
+      text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+
+  info:
+    - name: info-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+      channel: '#alerts-info'
+      title: 'Info Alert - {{ "{{ .GroupLabels.alertname }}" }}'
+      text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+```
+
+### Supported Channel Types
+- **Slack**: Requires `api_url`, `channel`, `title`, `text`
+- **Email**: Requires `to` (list), `subject`
+- **Webhook**: Requires `url`
+- **PagerDuty**: Requires `routing_key`, optional `description`
+
+### Global SMTP Configuration
+For email notifications, configure SMTP settings:
+```yaml
+metrics_alertmanager_global:
+  smtp_smarthost: 'smtp.yourcompany.com:587'
+  smtp_from: 'alertmanager@yourcompany.com'
+  smtp_auth_username: 'your-smtp-user'
+  smtp_auth_password: 'your-smtp-password'
+  smtp_require_tls: true
+```
+
+### Custom Routes and Inhibition Rules
+Add custom routing rules for specific alerts:
+```yaml
+metrics_alertmanager_custom_routes:
+  - match:
+      alertname: ChainletDown
+    receiver: critical-alerts
+    group_wait: 10s
+    repeat_interval: 1h
+
+metrics_alertmanager_inhibit_rules:
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ['alertname', 'cluster', 'service']
+```
+
+### Example Configuration
+Here's a complete example for your inventory file:
+```yaml
+# Disable noisy Kubernetes control plane ServiceMonitors
+metrics_kube_proxy_enabled: false
+metrics_kube_scheduler_enabled: false
+metrics_kube_etcd_enabled: false
+metrics_kube_controller_manager_enabled: false
+
+# Enable AlertManager configuration
+metrics_alertmanager_config_enabled: true
+
+# SMTP settings for email notifications
+metrics_alertmanager_global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@yourcompany.com'
+  smtp_auth_username: 'alerts@yourcompany.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+# Notification channels
+metrics_alertmanager_channels:
+  critical:
+    - name: critical-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/<some_secrets>'
+      channel: '#alerts-critical'
+      title: 'CRITICAL: {{ "{{ .GroupLabels.alertname }}" }}'
+      text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+    - name: critical-pagerduty
+      type: pagerduty
+      routing_key: 'your-pagerduty-integration-key'
+      description: 'Critical Saga Alert'
+
+  warning:
+    - name: warning-slack
+      type: slack
+      api_url: 'https://hooks.slack.com/services/<some_secrets>'
+      channel: '#alerts-warning'
+      title: 'Warning: {{ "{{ .GroupLabels.alertname }}" }}'
+      text: '{{ "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}" }}'
+```
