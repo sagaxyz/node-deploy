@@ -253,23 +253,15 @@ metrics_alertmanager_inhibit_rules:
     equal: ['alertname', 'cluster', 'service']
 ```
 
-### Disabling Noisy Default Rules
-
-In many cases (e.g.: managed kubernetes like EKS, or when core services don't expose metrics) you may get false alarms like `KubeSchedulerDown`, `KubeControllerManagerDown`, `etcdMembersDown`, etc.
-
-**Recommended approach**: Disable these alert rules entirely by setting these variables to `false` in your inventory:
-
-```yaml
-# Disable noisy alerts for components without metrics (default: false)
-metrics_default_rules_kube_proxy: false
-metrics_default_rules_kube_scheduler: false
-metrics_default_rules_etcd: false
-metrics_default_rules_kube_controller_manager: false
-```
-
 ### Example Configuration
 Here's a complete example for your inventory file:
 ```yaml
+# Disable noisy Kubernetes control plane ServiceMonitors
+metrics_kube_proxy_enabled: false
+metrics_kube_scheduler_enabled: false
+metrics_kube_etcd_enabled: false
+metrics_kube_controller_manager_enabled: false
+
 # Enable AlertManager configuration
 metrics_alertmanager_config_enabled: true
 

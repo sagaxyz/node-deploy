@@ -14,14 +14,15 @@ metrics_prometheus_scrape_interval: 30s
 metrics_prometheus_storage_class: saga-default
 metrics_prometheus_storage_size: 10Gi
 
-# Default rules configuration - disable noisy alerts for components without metrics
-metrics_default_rules_kube_proxy: false
-metrics_default_rules_kube_scheduler: false
-metrics_default_rules_etcd: false
-metrics_default_rules_kube_controller_manager: false
+# ServiceMonitor configuration - disable scraping for components without metrics
+# These variables control both ServiceMonitors and their corresponding alert rules
+metrics_kube_proxy_enabled: false
+metrics_kube_scheduler_enabled: false
+metrics_kube_etcd_enabled: false
+metrics_kube_controller_manager_enabled: false
 
 # Alertmanager configuration
-metrics_alertmanager_storage_class: saga-default
+metrics_alertmanager_storage_class: "" # override to enable persistent storage (e.g.: "saga-default")
 metrics_alertmanager_storage_size: 2Gi
 
 # AlertManager notification channels configuration
