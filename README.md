@@ -140,6 +140,7 @@ Collection of util commands to interact with the cluster. The script is organize
 
 #### Validator Commands
 - `validator unjail <identifier>` Unjail validator by namespace or chain_id
+- `validator status [<identifier>]` Check validator status on chain(s) - fetches moniker from SPC and checks if validator is in the active set (includes SPC when no identifier specified)
 
 #### Other Commands
 - `install-completion`            Install bash completion for cluster.sh
@@ -165,6 +166,9 @@ scripts/cluster.sh chainlets redeploy
 # Validator operations
 scripts/cluster.sh validator unjail saga-my-chain
 scripts/cluster.sh validator unjail my_chain_id
+scripts/cluster.sh validator status saga-my-chain    # Check status on specific chain
+scripts/cluster.sh validator status my_chain_id      # Check status using chain_id
+scripts/cluster.sh validator status                  # Check status on SPC and all chains
 ```
 
 Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context than the current. Use `scripts/cluster.sh --help` or `scripts/cluster.sh COMMAND --help` for detailed usage information.

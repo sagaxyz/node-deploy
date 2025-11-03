@@ -20,7 +20,7 @@ _cluster_completion() {
     chainlets_subcommands="status redeploy"
 
     # Validator subcommands
-    validator_subcommands="unjail"
+    validator_subcommands="unjail status"
     
     # Available options
     opts="--kubeconfig -h --help"
