@@ -1,33 +1,5 @@
-- name: Create SSC namespace
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: "sagasrv-ssc"
-    kubeconfig: "{{ kubeconfig_file }}"
-
-# Genesis file will be generated locally by the init container
-
-# SSC validator secrets creation - will be handled by init container for now
-
 - name: Deploy SSC
   kubernetes.core.k8s:
     state: present
     template: templates/ssc-deploy.yml.j2
     kubeconfig: "{{ kubeconfig_file }}"
-
-- name: Check SSC pod status
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "sagasrv-ssc"
-    label_selectors:
-      - "app=ssc"
-    kubeconfig: "{{ kubeconfig_file }}"
-  register: ssc_pod_info
-
-- name: Display SSC pod status
-  debug:
-    msg: "SSC pod status: {{ ssc_pod_info.resources[0].status.phase if ssc_pod_info.resources else 'No pods found' }}"
-
