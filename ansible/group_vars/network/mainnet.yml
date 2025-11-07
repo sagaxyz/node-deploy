@@ -21,13 +21,10 @@ statesync_rpc_domains:
   - spsrv1.sagarpc.io
   - spsrv2.sagarpc.io
 
-# SSC (disabled by default for mainnet)
-ssc:
-  enabled: false
-  chain_id: "ssc-1"
-  denom: "usaga"
-  rpc: "https://ssc-rpc.sagarpc.io:443"
-  consumer_gas_price: "0.01"
-  genesis_url: ""
-  volume_size: "100Gi"
-  key_password: "{{ keychain_password }}"
+# SSC
+ssc_chain_id: "ssc-1"
+ssc_denom: "usaga"
+ssc_rpc: "https://ssc-rpc.sagarpc.io:443"
+ssc_consumer_gas_price: "0.01"
+ssc_genesis_url: "https://raw.githubusercontent.com/sagaxyz/mainnet/refs/heads/main/genesis/genesis.json"
+ssc_volume_size: "100Gi"

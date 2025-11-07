@@ -1,25 +1,30 @@
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: sagasrv-ssc
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ssc-data-pvc
+  name: ssc-pvc
   namespace: sagasrv-ssc
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ ssc.volume_size }}
-  storageClassName: saga-default
+      storage: {{ ssc_volume_size }}
+  storageClassName: {{ ssc_storage_class }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ssc-init-script
+  name: ssc-scripts
   namespace: sagasrv-ssc
 data:
-  init-validator.sh: |
-    {{ lookup('template', 'init-validator.sh.j2') | indent(4) }}
+  start.sh: |
+    {{ lookup('file', role_path ~ '/templates/start.sh') | indent(4) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,24 +46,25 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "26660"
     spec:
-      initContainers:
-        - name: init-validator
-          image: sagaxyz/ssc:0.5.0-alpha.2
-          command: ["/scripts/init-validator.sh"]
-          env:
-            - name: KEY_PASSWORD
-              value: "{{ ssc.key_password }}"
-            - name: VALIDATOR_MNEMONIC
-              value: "{{ validator_mnemonic }}"
-          volumeMounts:
-            - name: ssc-data
-              mountPath: /root/.ssc
-            - name: init-script
-              mountPath: /scripts
       containers:
         - name: ssc
-          image: sagaxyz/ssc:0.5.0-alpha.2
-          command: ["sscd", "start", "--home", "/root/.ssc", "--rpc.laddr", "tcp://0.0.0.0:26657", "--p2p.laddr", "tcp://0.0.0.0:26656", "--grpc.address", "0.0.0.0:9090"]
+          image: {{ ssc_image }}
+          command: [ "/scripts/start.sh"]
+          env:
+{% if ssc_mode == "validator" %}
+            - name: VALIDATOR_MNEMONIC
+              value: "{{ ssc_validator_mnemonic }}"
+{% endif %}
+            - name: CHAIN_ID
+              value: "{{ ssc_chain_id }}"
+            - name: GENESIS_URL
+              value: "{{ ssc_genesis_url }}"
+            - name: MONIKER
+              value: "{{ ssc_moniker }}"
+            - name: OPTS
+              value: "{{ ssc_start_args }}"
+            - name: PERSISTENT_PEERS
+              value: "{{ ssc_persistent_peers }}"
           ports:
             - containerPort: 26657
               name: rpc
@@ -71,6 +77,8 @@ spec:
           volumeMounts:
             - name: ssc-data
               mountPath: /root/.ssc
+            - name: ssc-scripts
+              mountPath: /scripts
           resources:
             requests:
               memory: "{{ ssc_resources.requests.memory }}"
@@ -78,14 +86,13 @@ spec:
             limits:
               memory: "{{ ssc_resources.limits.memory }}"
               cpu: "{{ ssc_resources.limits.cpu }}"
-          # Health checks removed - SSC may not expose health endpoint
       volumes:
         - name: ssc-data
           persistentVolumeClaim:
-            claimName: ssc-data-pvc
-        - name: init-script
+            claimName: ssc-pvc
+        - name: ssc-scripts
           configMap:
-            name: ssc-init-script
+            name: ssc-scripts
             defaultMode: 0755
       restartPolicy: Always
 ---

@@ -60,19 +60,19 @@ spec:
               value: "true"
 {{ if $isHub }}
             - name: CONSUMER_CHAIN_ID
-              value: "%%% ssc.chain_id %%%"
+              value: "%%% ssc_chain_id %%%"
             - name: CONSUMER_DENOM
-              value: "%%% ssc.denom %%%"
+              value: "%%% ssc_denom %%%"
             - name: CONSUMER_RPC
-              value: "%%% ssc.rpc %%%"
+              value: "%%% ssc_rpc %%%"
             - name: CONSUMER_CREATE_ACCOUNT
               value: "false"
             - name: CONSUMER_GAS_PRICE
-              value: "%%% ssc.consumer_gas_price %%%"
+              value: "%%% ssc_consumer_gas_price %%%"
             - name: CONSUMER_GRPC
-              value: "%%% ssc.grpc %%%"
+              value: "%%% ssc_grpc %%%"
             - name: CONSUMER_WS
-              value: "wss://%%% ssc.rpc | regex_replace('^(http|https)://', '') %%%/websocket"
+              value: "wss://%%% ssc_rpc | regex_replace('^(http|https)://', '') %%%/websocket"
 {{ else }}
             - name: CONSUMER_CHAIN_ID
               value: "{{ .ChainId }}"
