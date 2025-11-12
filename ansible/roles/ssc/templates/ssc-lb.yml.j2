@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssc-public
+  namespace: sagasrv-ssc
+{% if lb_annotations is defined %}
+  annotations:
+    {{ lb_annotations }}
+{% endif %}
+  labels:
+    app: ssc
+spec:
+  type: LoadBalancer
+  selector:
+    app: ssc
+  ports:
+    - name: tendermint-p2p
+      protocol: TCP
+      targetPort: 26656
+      port: 26656

@@ -33,6 +33,6 @@
   roles:
     - { role: metrics, tags: [metrics], when: metrics_enabled }
     - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
-    - { role: spc, tags: [spc] }
+    - { role: spc, tags: [spc], when: spc_enabled }
     - { role: ssc, tags: [ssc], when: ssc_enabled }
     - { role: controller, tags: [controller] }

@@ -22,8 +22,27 @@ controller_chainlet_resources:
 
 # Relayer vars
 controller_relayer_enabled: false
+controller_relayer_setup_enabled: true
 controller_relayer_version: "0.4.2"
+controller_relayer_image: "sagaxyz/controller-relayer:{{ controller_relayer_version }}"
 controller_relayer_wait_time: "0"
+ssc_consumer_gas_price: "0"
+
 # Load Balancer Configuration
 controller_chainlet_external_traffic_policy: Cluster
 controller_chainlet_allocate_loadbalancer_node_ports: false
+
+ssc_grpc: "ssc.sagasrv-ssc.svc.cluster.local:9090"
+ssc_rpc: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
+
+pruning_strategy: "default"
+
+fluentd_enabled: false
+
+statesync_rpc_domains:
+statesync_enabled: false
+statesync_trust_interval: 1000
+
+# Signer
+controller_remote_signer_enabled: false
+signer_grpc: "signer.sagasrv-signer.svc.cluster.local:9090"

@@ -49,22 +49,27 @@ spec:
       containers:
         - name: ssc
           image: {{ ssc_image }}
-          command: [ "/scripts/start.sh"]
           env:
 {% if ssc_mode == "validator" %}
-            - name: VALIDATOR_MNEMONIC
-              value: "{{ ssc_validator_mnemonic }}"
+          - name: VALIDATOR_MNEMONIC
+            value: "{{ ssc_validator_mnemonic }}"
 {% endif %}
-            - name: CHAIN_ID
-              value: "{{ ssc_chain_id }}"
-            - name: GENESIS_URL
-              value: "{{ ssc_genesis_url }}"
-            - name: MONIKER
-              value: "{{ ssc_moniker }}"
-            - name: OPTS
-              value: "{{ ssc_start_args }}"
-            - name: PERSISTENT_PEERS
-              value: "{{ ssc_persistent_peers }}"
+          - name: CHAIN_ID
+            value: "{{ ssc_chain_id }}"
+          - name: MONIKER
+            value: "{{ ssc_moniker }}"
+          - name: OPTS
+            value: "{{ ssc_start_args }}"
+          - name: DENOM
+            value: "{{ ssc.denom }}"
+          - name: GENESIS
+            value: "{{ ssc_genesis }}"
+          - name: LOGLEVEL
+            value: "info"
+          - name: PEERS
+            value: "{{ ssc_peers }}"
+          - name: EXTERNAL_ADDRESS
+            value: "{{ ssc_external_address }}:26656"
           ports:
             - containerPort: 26657
               name: rpc

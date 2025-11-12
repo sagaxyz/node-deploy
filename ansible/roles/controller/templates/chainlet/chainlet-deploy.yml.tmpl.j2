@@ -1,12 +1,13 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: chainlet
+  name: "{{ .Name }}"
   namespace: "{{ .Namespace }}"
 spec:
   type: ClusterIP
   selector:
-    app: chainlet
+    app: "{{ .Name }}"
   ports:
     - name: tendermintrpc
       port: 26657
@@ -30,10 +31,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: chainlet-pvc
+  name: "chainlet-pvc"
   namespace: "{{ .Namespace }}"
   labels:
-    app: chainlet
+    app: "{{ .Name }}"
 spec:
   accessModes:
     - ReadWriteOnce
@@ -44,7 +45,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chainlet
+  name: "{{ .Name }}"
   namespace: "{{ .Namespace }}"
 spec:
   replicas: 1
@@ -52,44 +53,107 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: chainlet
+      app: "{{ .Name }}"
   template:
     metadata:
       labels:
-        app: chainlet
+        app: "{{ .Name }}"
         chainId: "{{ .ChainId }}"
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "26660"
-        saga.xyz/stack-version: "{{ .ChainletStackVersion }}"
-        saga.xyz/stack-name: "{{ .ChainletStackName }}"
+        saga.xyz/chain-version: "{{ .ChainVersion }}"
+        saga.xyz/chain-source: "{{ .ChainSource }}"
     spec:
       restartPolicy: Always
+{{ if and .ChainGenesisImage .ChainCCVConsumer }}
+      initContainers:
+        - name: "{{ .Name }}-genesis"
+          image: "{{ .ChainGenesisImage }}"
+          imagePullPolicy: IfNotPresent
+          command: ["/root/genesis.sh"]
+          env:
+          - name: CHAIN_ID
+            value: "{{ .ChainId }}"
+          - name: MAINTAINERS
+            value: "{{ .ChainMaintainers }}"
+          - name: DENOM
+            value: "{{ .CoinDenom }}"
+          - name: GENESIS_CCV
+            value: "{{ .ChainGenesisCcv }}"
+          - name: GENESIS_TIME
+            value: "{{ .ChainGenesisTime }}"
+{% if voting_period is defined %}
+          - name: VOTING_PERIOD
+            value: "%%% voting_period %%%"
+{% endif %}
+{{ range $key, $value := .ChainEnvVars }}
+          - name: {{ $key | ToUpper }}
+            value: "{{ $value }}"
+{{ end }}
+{{ range $key, $value := .ChainParams }}
+          - name: PARAM_{{ $key | ToUpper }}
+            value: "{{ $value }}"
+{{ end }}
+          volumeMounts:
+            - name: "saga-{{ .Name }}-persistent-storage"
+              mountPath: "/root/.sagaosd"
+              subPath: sagaosd
+{{ end }}
       containers:
-        - image: "{{ .ChainletImage }}"
-          name: chainlet
+        - image: "{{ .ChainImage }}"
+          name: "{{ .Name }}"
           imagePullPolicy: IfNotPresent
           env:
-          - name: CHAINID
+          - name: UID
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.uid
+          - name: CHAIN_ID
             value: "{{ .ChainId }}"
           - name: LOGLEVEL
             value: "info"
           - name: KEYNAME
             value: "chainlet-operator-key"
           - name: EXTERNAL_ADDRESS
-            value: "{{ .ChainletExternalAddress }}"
+            value: "{{ .ChainExternalAddress }}"
           - name: MAINTAINERS
-            value: "{{ .ChainletMaintainers }}"
+            value: "{{ .ChainMaintainers }}"
+          - name: DENOM
+            value: "{{ .CoinDenom }}"
+          - name: PEERS
+            value: "{{ .ChainPeers }}"
+          - name: NODE_KEY
+            value: "{{ .NodeKey }}"
+          - name: VALIDATOR_KEY
+            value: "{{ .ValidatorKey }}"
+          - name: OPTS
+            value: "--pruning %%% pruning_strategy %%% --json-rpc.gas-cap 50000004 --api.enable=false --grpc.enable=true"
+          - name: CHAINID
+            value: "{{ .ChainId }}"
           - name: VALIDATOR_ADDRESSES_COSMOS
-            value: "{{ .ChainletValidators }}"
+            value: "%%% validator_addresses %%%"
           - name: STAKE_OWNER_ADDRESS
             value: "%%% stake_owner_address %%%"
+          - name: EVM_MAX_TX_GAS_WANTED
+            value: "3000000"
           - name: KEYPASSWD
             value: "%%% keychain_password %%%"
-          - name: AWS_ACCESS_KEY_ID
-            value: "%%% aws_access_key_id %%%"
+          - name: VALIDATOR_MNEMONIC
+            value: "%%% mnemonic %%%"
+          - name: S3BUCKET
+            value: "%%% s3_bucket %%%"
           - name: AWS_SECRET_ACCESS_KEY
             value: "%%% aws_secret_access_key %%%"
+          - name: AWS_ACCESS_KEY_ID
+            value: "%%% aws_access_key_id %%%"
+          - name: VALIDATOR_PROVIDER
+            value: "%%% validator_provider %%%"
+          - name: JSON_RPC_GAS_CAP
+            value: "50000000"
+          - name: PRUNING_STRATEGY
+            value: "%%% pruning_strategy %%%"
 {% if voting_period is defined %}
           - name: VOTING_PERIOD
             value: "%%% voting_period %%%"
@@ -104,9 +168,9 @@ spec:
           - name: SNAPSHOT_TRUST_INTERVAL
             value: "%%% statesync_trust_interval %%%"
           - name: SYNC_RPC
-            value: "{% for domain in statesync_rpc_domains %}https://{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% domain %%%:443{% if not loop.last %},{% endif %}{% endfor %}"
+            value: "{% for domain in statesync_rpc_domains %}https://{{ .ChainName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% domain %%%:443{% if not loop.last %},{% endif %}{% endfor %}"
           - name: NODE_RPC
-            value: "https://{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% statesync_rpc_domains[0] %%%:443"
+            value: "https://{{ .ChainName }}-{{ .ChainIdNumber }}-cosmosrpc.jsonrpc.%%% statesync_rpc_domains[0] %%%:443"
 {% endif %}
 {% if stake_amount is defined %}
           - name: STAKE_AMOUNT
@@ -116,11 +180,15 @@ spec:
           - name: STAKING_FEES
             value: "%%% staking_fees %%%"
 {% endif %}
-{{ range $key, $value := .ChainletEnvVars }}
+{{ range $key, $value := .ChainEnvVars }}
           - name: {{ $key | ToUpper }}
             value: "{{ $value }}"
 {{ end }}
-{{ range $key, $value := .ChainletSpcVars }}
+{{ range $key, $value := .ChainParams }}
+          - name: PARAM_{{ $key | ToUpper }}
+            value: "{{ $value }}"
+{{ end }}
+{{ range $key, $value := .ChainParams }}
           - name: SPCPARAM_{{ $key | ToUpper }}
             value: "{{ $value }}"
 {{ end }}
@@ -135,10 +203,21 @@ spec:
           resources:
             %%% controller_chainlet_resources | to_nice_yaml(indent=2) | indent(12, true) | trim %%%
           volumeMounts:
-            - name: chainlet-volume
+            - name: "chainlet-volume"
               mountPath: "/root/.sagaosd"
               subPath: sagaosd
+{% if fluentd_enabled %}
+            - name: "fluentd-logs"
+              mountPath: "/var/log/saga"
+              subPathExpr: $(UID)
+{% endif %}
       volumes:
         - name: "chainlet-volume"
           persistentVolumeClaim:
-            claimName: chainlet-pvc
+            claimName: "chainlet-pvc"
+{% if fluentd_enabled %}
+        - name: "fluentd-logs"
+          hostPath:
+            path: /var/log/saga
+            type: DirectoryOrCreate
+{% endif %}
