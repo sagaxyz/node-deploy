@@ -1,0 +1,94 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "relayer-setup"
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      job-name: "relayer-setup"
+  template:
+    metadata:
+      labels:
+        job-name: "relayer-setup"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: OnFailure
+      containers:
+        - name: relayer
+          image: %%% controller_relayer_image %%%
+          resources:
+            requests:
+              memory: "1Gi"
+            limits:
+              memory: "2Gi"
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "setup.sh"]
+          env:
+            - name: LOGLEVEL
+              value: "info"
+            - name: KEYPASSWD
+              value: "%%% keychain_password %%%"
+            - name: CCV
+              value: "{{ .ChainCCVConsumer }}"
+            - name: HUB
+              value: "false"
+{{ if $isHub }}
+            - name: CONSUMER_CHAIN_ID
+              value: "%%% ssc.chain_id %%%"
+            - name: CONSUMER_DENOM
+              value: "%%% ssc.denom %%%"
+            - name: CONSUMER_RPC
+              value: "%%% ssc.rpc %%%"
+            - name: CONSUMER_CREATE_ACCOUNT
+              value: "false"
+            - name: CONSUMER_GAS_PRICE
+              value: "%%% ssc.consumer_gas_price %%%"
+            - name: CONSUMER_GRPC
+              value: "%%% ssc.grpc %%%"
+            - name: CONSUMER_WS
+              value: "wss://%%% ssc.rpc | regex_replace('^(http|https)://', '') %%%/websocket"
+{{ else }}
+            - name: CONSUMER_CHAIN_ID
+              value: "{{ .ChainId }}"
+            - name: CONSUMER_DENOM
+              value: "{{ .CoinDenom }}"
+            - name: CONSUMER_RPC
+              value: "http://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:26657"
+            - name: CONSUMER_GRPC
+              value: "http://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:9090"
+            - name: CONSUMER_WS
+              value: "ws://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:26657/websocket"
+{{ end }}
+            - name: CONSUMER_MNEMONIC
+              value: "%%% mnemonic %%%"
+            - name: HUB_CHAIN_ID
+              value: "{{ .HubChainId }}"
+            - name: HUB_DENOM
+              value: "{{ .HubDenom }}"
+            - name: HUB_RPC
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657"
+            - name: HUB_GRPC
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:9090"
+            - name: HUB_WS
+              value: "ws://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657/websocket"
+            - name: HUB_API
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:1317"
+            - name: HUB_MNEMONIC
+              value: "%%% mnemonic %%%"
+            - name: PROVIDER_CHAIN_ID
+              value: "%%% ssc_chain_id %%%"
+            - name: PROVIDER_RPC
+              value: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
+            - name: PROVIDER_GRPC
+              value: "http://ssc.sagasrv-ssc.svc.cluster.local:9090"
+            - name: PROVIDER_WS
+              value: "ws://ssc.sagasrv-ssc.svc.cluster.local:26657/websocket"
+            - name: PROVIDER_LCD
+              value: "http://ssc.sagasrv-ssc.svc.cluster.local:1317"
+            - name: PROVIDER_MNEMONIC
+              value: "%%% mnemonic %%%"
+            - name: PROVIDER_DENOM
+              value: "%%% ssc_denom %%%"

@@ -1,0 +1,60 @@
+{% if fluentd_enabled %}
+json_log_file: "/var/log/saga/controller.log"
+{% endif %}
+loglevel: "info"
+listen_grpc: ":19090"
+listen_grpc_gateway: ":18090"
+listen_prometheus: ":9000"
+sync_frequency: "5s"
+mnemonic: "{{ mnemonic }}"
+only_validating: true
+auto_opt_in: true
+sources:
+  "ssc":
+    grpc_endpoint: "{{ controller_ssc_grpc }}"
+    state_request_timeout: "10s"
+    state_reload: "5s"
+    rpc_endpoint: "{{ controller_ssc_rpc }}"
+    chain_id: "{{ ssc_chain_id }}"
+    signer_key_id: "controller"
+signer:
+{% if controller_remote_signer_enabled %}
+  backend: "saga"
+{% else %}
+  backend: "local"
+{% endif %}
+  key_ids:
+  - "controller"
+  - "relayer"
+  saga:
+    grpc_endpoint: "{{ controller_remote_signer_grpc }}"
+    request_timeout: "30s"
+  local:
+deployment:
+  deployer: "kube"
+  state_reload: "10s"
+  state_request_timeout: "30s"
+  deploy_timeout: "10m"
+  deploy_parallel: 8
+  kube:
+#    enable_load_balancer: {{ expose_p2p }}
+    in_cluster_config: true
+    config_path: "/etc/saga/kube/config"
+    template_paths:
+      "ssc": "/etc/saga/controller/kube/chainlet.yml.tmpl"
+    lb_template_path: "/etc/saga/controller/kube/lb.yml.tmpl"
+    pod_running_timeout: "300s"
+    service_external_ip_timeout: "300s"
+    host_resolution_timeout: "300s"
+    config_map_key_commit_timeout: "300s"
+    node_deployment_name: "chainlet"
+    namespace_prefix: "saga"
+    namespace_deletion_timeout: "300s"
+    namespace_pod_timeout: "300s"
+    qps: 100
+    throttling_burst: 200
+    lb_port_limit: {{ controller_lb_port_limit }}
+    deployments: {{ controller_chainlet_deployment_list }}
+    legacy_namespace_names: true
+    env:
+      moniker: "{{ moniker }}"

@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sagasrv-controller
+  labels:
+    name: sagasrv-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: controller
+  namespace: sagasrv-controller
+  labels:
+    app: controller
+spec:
+  type: ClusterIP
+  selector:
+    app: controller
+  ports:
+    - name: grpc-controller
+      protocol: TCP
+      targetPort: 19090
+      port: 19090
+    - name: http-controller
+      protocol: TCP
+      targetPort: 19090
+      port: 80
+    - name: https-controller
+      protocol: TCP
+      targetPort: 19090
+      port: 443
+    - name: http-prometheus-controller
+      protocol: TCP
+      targetPort: 9000
+      port: 9000
+    - name: httpdebug-controller
+      protocol: TCP
+      targetPort: 18090
+      port: 8080
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: "controller-role"
+rules:
+  - apiGroups: ["", "batch", "apps", "networking.k8s.io" ]
+    resources: ["namespaces", "services", "jobs", "pods", "deployments", "deployments/scale", "statefulsets", "persistentvolumeclaims", "ingresses", "configmaps"]
+    verbs: ["get", "list", "update", "watch", "delete", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: "controller-role-binding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "controller-role"
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: sagasrv-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "controller"
+  namespace: sagasrv-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: controller
+  template:
+    metadata:
+      labels:
+        app: controller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9000"
+    spec:
+      containers:
+        - image: {{ controller_image }}
+          name: controller
+          env:
+          - name: UID
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.uid
+          ports:
+            - containerPort: 19090
+            - containerPort: 18090
+            - containerPort: 9000
+          volumeMounts:
+          - name: "controller-config"
+            mountPath: "/etc/saga/controller"
+          - name: "controller-config-kube"
+            mountPath: "/etc/saga/controller/kube"
+{% if fluentd_enabled %}
+          - name: "fluentd-logs"
+            mountPath: "/var/log/saga"
+            subPathExpr: $(UID)
+{% endif %}
+          resources: {{ controller_resources }}
+      volumes:
+      - name: "controller-config"
+        configMap:
+          name: "controller-config"
+      - name: "controller-config-kube"
+        configMap:
+          name: "controller-config-kube"
+{% if fluentd_enabled %}
+      - name: "fluentd-logs"
+        hostPath:
+          path: /var/log/saga
+          type: DirectoryOrCreate
+{% endif %}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-config
+  namespace: sagasrv-controller
+data:
+  controller.yml: |
+    {{ lookup('template', 'config/controller-config.yml.j2') | indent(4) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-config-kube
+  namespace: sagasrv-controller
+data:
+  chainlet.yml.tmpl: |
+    {{ lookup('file', chainlet_template_dest) | indent(4) }}
+  lb.yml.tmpl: |
+    {{ lookup('template', '../roles/controller/templates/chainlet/lb.yml.tmpl.j2') | indent(4) }}

@@ -81,7 +81,7 @@ spec:
 {% endif %}
 {% if validator_provider == 1 %}
           - name: VALIDATOR_MNEMONIC
-            value: {{ validator_mnemonic }}
+            value: {{ mnemonic }}
 {% endif %}
 {% if voting_period is defined %}
           - name: VOTING_PERIOD

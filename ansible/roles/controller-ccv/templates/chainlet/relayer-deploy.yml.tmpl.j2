@@ -1,0 +1,119 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: relayer
+  namespace: "{{ .Namespace }}"
+  labels:
+    app: relayer
+spec:
+  type: ClusterIP
+  selector:
+    app: "relayer"
+  ports:
+    - targetPort: 5183
+      port: 5183
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "relayer"
+  namespace: "{{ .Namespace }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: "relayer"
+  template:
+    metadata:
+      labels:
+        app: "relayer"
+        chainId: "{{ .ChainId }}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5183"
+        prometheus.io/path: "/relayer/metrics"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      containers:
+        - name: relayer
+          image: %%% controller_relayer_image %%%
+          resources:
+            requests:
+              memory: "1Gi"
+            limits:
+              memory: "2Gi"
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "start.sh"]
+          env:
+            - name: LOGLEVEL
+              value: "info"
+            - name: KEYPASSWD
+              value: "%%% keychain_password %%%"
+            - name: CCV
+              value: "{{ .ChainCCVConsumer }}"
+            - name: HUB
+              value: "false"
+{{ if $isHub }}
+            - name: CONSUMER_CHAIN_ID
+              value: "%%% ssc_chain_id %%%"
+            - name: CONSUMER_DENOM
+              value: "%%% ssc_denom %%%"
+            - name: CONSUMER_RPC
+              value: "%%% controller_ssc_rpc %%%"
+            - name: CONSUMER_CREATE_ACCOUNT
+              value: "false"
+            - name: CONSUMER_GAS_PRICE
+              value: "%%% controller_relayer_consumer_gas_price %%%"
+            - name: CONSUMER_GRPC
+              value: "%%% controller_ssc_grpc %%%"
+            - name: CONSUMER_WS
+              value: "wss://%%% controller_ssc_rpc | regex_replace('^(http|https)://', '') %%%/websocket"
+{{ else }}
+            - name: CONSUMER_CHAIN_ID
+              value: "{{ .ChainId }}"
+            - name: CONSUMER_DENOM
+              value: "{{ .CoinDenom }}"
+            - name: CONSUMER_RPC
+              value: "http://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:26657"
+            - name: CONSUMER_GRPC
+              value: "http://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:9090"
+            - name: CONSUMER_WS
+              value: "ws://{{ .Name }}.{{ .Namespace }}.svc.cluster.local:26657/websocket"
+{{ end }}
+            - name: CONSUMER_MNEMONIC
+              value: "%%% mnemonic %%%"
+            - name: HUB_CHAIN_ID
+              value: "{{ .HubChainId }}"
+            - name: HUB_DENOM
+              value: "{{ .HubDenom }}"
+            - name: HUB_RPC
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657"
+            - name: HUB_GRPC
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:9090"
+            - name: HUB_WS
+              value: "ws://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:26657/websocket"
+            - name: HUB_API
+              value: "http://{{ .Name }}.{{ .HubNamespace }}.svc.cluster.local:1317"
+            - name: HUB_MNEMONIC
+              value: "%%% mnemonic %%%"
+            - name: PROVIDER_CHAIN_ID
+              value: "%%% ssc_chain_id %%%"
+            - name: PROVIDER_RPC
+              value: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
+            - name: PROVIDER_GRPC
+              value: "http://ssc.sagasrv-ssc.svc.cluster.local:9090"
+            - name: PROVIDER_WS
+              value: "ws://ssc.sagasrv-ssc.svc.cluster.local:26657/websocket"
+            - name: PROVIDER_LCD
+              value: "http://ssc.sagasrv-ssc.svc.cluster.local:1317"
+            - name: PROVIDER_MNEMONIC
+              value: "%%% mnemonic %%%"
+            - name: PROVIDER_DENOM
+              value: "%%% ssc_denom %%%"
+          ports:
+            - containerPort: 5183
