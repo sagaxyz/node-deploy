@@ -1,0 +1,32 @@
+- name: Generate chainlet template
+  ansible.builtin.template:
+    src: templates/chainlet/chainlet.yml.tmpl.j2
+    dest: "{{ chainlet_template_dest }}"
+    mode: '0644'
+    variable_start_string: "%%%" # to disable golang variables substitutions
+    variable_end_string: "%%%"
+  register: chainlet_template_output
+
+- name: Get deployments list
+  shell: cat {{ chainlet_template_dest }} | grep -v "^{" | yq eval-all 'select(.kind == "Deployment") | .metadata.name' | sed 's/{{ '{{' }} .Name {{ '}}' }}/chainlet/g' | grep -v "^\-\-\-"
+  register: chainlet_deployments_output
+
+- name: Set deployment list as fact
+  set_fact:
+    controller_chainlet_deployment_list: "{{ chainlet_deployments_output.stdout.splitlines() }}"
+
+- name: Deploy Saga Controller
+  kubernetes.core.k8s:
+    state: present
+    template: templates/controller-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"
+
+- name: Restart controller pod if the template changed
+  kubernetes.core.k8s:
+    state: absent
+    kind: Pod
+    namespace: sagasrv-controller
+    label_selectors:
+      - "app = controller"
+    kubeconfig: "{{ kubeconfig_file }}"
+  when: chainlet_template_output.changed

@@ -1,0 +1,40 @@
+# Controller config
+controller_version: "0.10.2"
+controller_image: "sagaxyz/controller:{{ controller_version }}"
+controller_resources:
+  requests:
+    memory: "2Gi"
+    cpu: "1"
+  limits:
+    memory: "4Gi"
+    cpu: "2"
+chainlet_template_dest: "/tmp/chainlet.yml.tmpl"
+controller_lb_port_limit: 1000
+
+# Chainlet vars
+controller_chainlet_resources:
+  requests:
+    memory: "1Gi"
+    cpu: "0.5"
+  limits:
+    memory: "4Gi"
+    cpu: "2"
+
+# Relayer vars
+controller_relayer_enabled: false
+controller_relayer_setup_enabled: true
+controller_relayer_version: "0.4.2"
+controller_relayer_image: "sagaxyz/controller-relayer:{{ controller_relayer_version }}"
+controller_relayer_wait_time: "0"
+controller_relayer_consumer_gas_price: "0"
+
+# Load Balancer Configuration
+controller_chainlet_external_traffic_policy: Cluster
+controller_chainlet_allocate_loadbalancer_node_ports: false
+
+controller_ssc_grpc: "ssc.sagasrv-ssc.svc.cluster.local:9090"
+controller_ssc_rpc: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
+
+# Signer
+controller_remote_signer_enabled: false
+controller_remote_signer_grpc: "signer.sagasrv-signer.svc.cluster.local:9090"

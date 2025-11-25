@@ -1,0 +1,12 @@
+{{- $isHub := (eq .ChainId "%%% hub_chain_id %%%") -}}
+
+{% include 'chainlet-deploy.yml.tmpl.j2' %}
+
+{% if controller_relayer_enabled %}
+{% include 'relayer-deploy.yml.tmpl.j2' %}
+
+{% if controller_relayer_setup_enabled %}
+{% include 'relayer-setup-deploy.yml.tmpl.j2' %}
+{% endif %}
+
+{% endif %}

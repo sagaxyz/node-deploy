@@ -3,3 +3,47 @@
     state: present
     template: templates/ssc-deploy.yml.j2
     kubeconfig: "{{ kubeconfig_file }}"
+
+- name: Check SSC pod status
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "sagasrv-ssc"
+    label_selectors:
+      - "app=ssc"
+    kubeconfig: "{{ kubeconfig_file }}"
+  register: ssc_pod_info
+
+- name: Display SSC pod status
+  debug:
+    msg: "SSC pod status: {{ ssc_pod_info.resources[0].status.phase if ssc_pod_info.resources else 'No pods found' }}"
+
+- name: Deploy SSC LB
+  kubernetes.core.k8s:
+    state: present
+    template: templates/ssc-lb.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"
+  register: ssc_lb
+  when: expose_p2p
+
+- name: Get public IP from SSC LB
+  kubernetes.core.k8s_info:
+    kind: Service
+    name: ssc-public
+    namespace: sagasrv-ssc
+    wait: true
+    kubeconfig: "{{ kubeconfig_file }}"
+  until: (svc_info['resources'][0]['status']['loadBalancer']['ingress'][0] | default('')) != ''
+  retries: 30
+  delay: 5
+  register: svc_info
+  when: expose_p2p
+
+- name: Set SSC public address or localhost
+  set_fact:
+    ssc_external_address: "{{ svc_info['resources'][0]['status']['loadBalancer']['ingress'][0]['hostname'] | default(svc_info['resources'][0]['status']['loadBalancer']['ingress'][0]['ip']) if expose_p2p else '127.0.0.1' }}"
+
+- name: Deploy SSC
+  kubernetes.core.k8s:
+    state: present
+    template: templates/ssc-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"

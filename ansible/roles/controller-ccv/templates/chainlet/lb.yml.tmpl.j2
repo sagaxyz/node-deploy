@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ '{{ .Name }}' }}"
+  namespace: "{{ '{{ .Namespace }}' }}"
+{% if lb_annotations is defined %}
+  annotations:
+    {{ lb_annotations }}
+{% endif %}
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.13.1
+spec:
+  externalTrafficPolicy: {{ controller_chainlet_external_traffic_policy }}
+  allocateLoadBalancerNodePorts: {{ controller_chainlet_allocate_loadbalancer_node_ports }}
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - appProtocol: http
+    name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  type: LoadBalancer
