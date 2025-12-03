@@ -38,3 +38,4 @@ controller_ssc_rpc: "http://ssc.sagasrv-ssc.svc.cluster.local:26657"
 # Signer
 controller_remote_signer_enabled: false
 controller_remote_signer_grpc: "signer.sagasrv-signer.svc.cluster.local:9090"
+controller_signer_ssc_cons_public_key: ""

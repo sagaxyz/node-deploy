@@ -19,14 +19,18 @@ sources:
     signer_key_id: "controller"
 signer:
 {% if controller_remote_signer_enabled %}
-  backend: "saga"
+  backend: "remote"
 {% else %}
   backend: "local"
+{% endif %}
+{% if controller_signer_ssc_cons_public_key != "" %}
+  static_cons_public_keys:
+    "{{ ssc_chain_id }}": "{{ controller_signer_ssc_cons_public_key }}"
 {% endif %}
   key_ids:
   - "controller"
   - "relayer"
-  saga:
+  remote:
     grpc_endpoint: "{{ controller_remote_signer_grpc }}"
     request_timeout: "30s"
   local:
