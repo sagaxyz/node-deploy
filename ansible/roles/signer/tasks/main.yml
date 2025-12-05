@@ -1,0 +1,5 @@
+- name: Deploy SSC
+  kubernetes.core.k8s:
+    state: present
+    template: templates/signer-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"
