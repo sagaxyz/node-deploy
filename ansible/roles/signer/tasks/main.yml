@@ -1,4 +1,4 @@
-- name: Deploy SSC
+- name: Deploy Signer
   kubernetes.core.k8s:
     state: present
     template: templates/signer-deploy.yml.j2
