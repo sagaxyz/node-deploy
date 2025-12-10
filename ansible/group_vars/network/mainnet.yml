@@ -28,3 +28,7 @@ ssc_rpc: "https://ssc-rpc.sagarpc.io:443"
 ssc_consumer_gas_price: "0.01"
 ssc_genesis_url: "https://raw.githubusercontent.com/sagaxyz/mainnet/refs/heads/main/genesis/genesis.json"
 ssc_volume_size: "100Gi"
+ssc_rpc_servers:
+  - https://ssc-rpc.sagarpc.io:443
+  - https://ssc-statesync-us.sagarpc.io:443
+ssc_peers: "fe0a7c342c3ea6934b89f87a4e5d93ae02792243@195.14.6.50:26014,7b205854267901c355fc1a18908764c118431375@51.81.167.206:17300,054b42595365063100789a218070023bb749c156@66.172.36.135:11156,8abc9ea7ab1db58c26eae9b55344644893f64d49@66.172.36.136:11156,4318a1fafa158df21b98d28bf5ed529f79db57c7@95.216.38.96:11156"
