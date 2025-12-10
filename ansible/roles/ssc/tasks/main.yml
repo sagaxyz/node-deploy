@@ -1,3 +1,7 @@
+- name: Expand kubeconfig file path
+  set_fact:
+    kubeconfig_file: "{{ kubeconfig_file | expanduser }}"
+
 - name: Deploy SSC
   kubernetes.core.k8s:
     state: present
