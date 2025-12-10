@@ -37,4 +37,4 @@
     - { role: ssc, tags: [ssc], when: ssc_enabled }
     - { role: controller-ccv, tags: [controller], when: controller_ccv }
     - { role: controller, tags: [controller], when: not controller_ccv }
-    - { role: signer, tags: [signer], when: signer_enabled }
+    - { role: signer, tags: [signer], when: signer_enabled | bool }
