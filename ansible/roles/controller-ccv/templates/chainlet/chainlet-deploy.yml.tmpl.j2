@@ -96,7 +96,7 @@ spec:
             value: "{{ $value }}"
 {{ end }}
           volumeMounts:
-            - name: "saga-{{ .Name }}-persistent-storage"
+            - name: "chainlet-pvc"
               mountPath: "/root/.sagaosd"
               subPath: sagaosd
 {{ end }}
