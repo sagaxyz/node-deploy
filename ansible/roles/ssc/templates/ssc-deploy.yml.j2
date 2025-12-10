@@ -64,12 +64,24 @@ spec:
             value: "{{ ssc.denom }}"
           - name: GENESIS
             value: "{{ ssc_genesis }}"
+{% if ssc_genesis_url is defined %}
+          - name: GENESIS_URL
+            value: "{{ ssc_genesis_url }}"
+{% endif %}
           - name: LOGLEVEL
             value: "info"
           - name: PEERS
             value: "{{ ssc_peers }}"
+          - name: PERSISTENT_PEERS
+            value: "{{ ssc_peers }}"
           - name: EXTERNAL_ADDRESS
             value: "{{ ssc_external_address }}:26656"
+{% if statesync_enabled and ssc_rpc_servers is defined %}
+          - name: SNAPSHOT_TRUST_INTERVAL
+            value: "{{ statesync_trust_interval }}"
+          - name: SYNC_RPC
+            value: "{{ ssc_rpc_servers | join(',') }}"
+{% endif %}
           ports:
             - containerPort: 26657
               name: rpc
