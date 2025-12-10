@@ -4,9 +4,9 @@ ssc_mode: "fullnode"
 ssc_moniker: "{{ moniker }}"
 ssc_version: "0.4.0"
 ssc_image: "sagaxyz/ssc:{{ ssc_version }}"
-ssc_validator_mnemonic: "{{ mnemonic  }}"
 ssc_key_password: "{{ keychain_password }}"
 ssc_start_args: "--rpc.laddr tcp://0.0.0.0:26657 --p2p.laddr tcp://0.0.0.0:26656 --grpc.address 0.0.0.0:9090"
+ssc_additional_args: ""
 
 # SSC Resources
 ssc_resources:
@@ -16,14 +16,13 @@ ssc_resources:
   limits:
     memory: "1Gi"
     cpu: "0.5"
-ssc_storage_class: "saga-default"
 ssc_volume_size: "50Gi"
 
-# SSC Network
-ssc_external_address: "127.0.0.1"
-ssc_additional_args: ""
+# StateSync
+ssc_statesync_enabled: true
+ssc_statesync_trust_interval: 1000
 
-ssc_chain_id: "ssc_9000-1"
-ssc_peers: ""
-ssc_denom: "utsaga"
-ssc_genesis: ""
+# Snapshots
+ssc_snapshot_enabled: true
+ssc_snapshot_interval: 1000
+ssc_snapshot_keep_recent: 2
