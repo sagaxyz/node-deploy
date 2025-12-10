@@ -76,7 +76,7 @@ spec:
           image: {{ signer_image }}
           args:
             - "--config"
-            - "/var/signer/config.yaml"
+            - "/etc/signer/config.yaml"
           ports:
             - name: grpc
               containerPort: 9090
@@ -90,7 +90,7 @@ spec:
               subPath: consensus.key
               readOnly: true
             - name: signer-config
-              mountPath: "/var/signer/config.yaml"
+              mountPath: "/etc/signer/config.yaml"
               subPath: config.yaml
               readOnly: true
           readinessProbe:
