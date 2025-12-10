@@ -19,6 +19,8 @@ spec:
     requests:
       storage: {{ signer_volume_size }}
   storageClassName: {{ signer_storage_class }}
+{# Only include the Secret if signer_consensus_key_raw.stdout is defined (i.e., we generated a new key) - this avoids overwriting the secret on subsequent runs, preserving the consensus key #}
+{% if signer_consensus_key_raw.stdout is defined %}
 ---
 apiVersion: v1
 kind: Secret
@@ -27,7 +29,8 @@ metadata:
   namespace: sagasrv-signer
 type: Opaque
 stringData:
-  consensus.key: "{{ signer_consensus_key }}"
+  consensus.key: "{{ signer_consensus_key_raw.stdout }}"
+{% endif %}
 ---
 apiVersion: v1
 kind: ConfigMap
