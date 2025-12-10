@@ -61,26 +61,26 @@ spec:
           - name: OPTS
             value: "{{ ssc_start_args }}"
           - name: DENOM
-            value: "{{ ssc.denom }}"
+            value: "{{ ssc.denom | default(ssc_denom) }}"
           - name: GENESIS
-            value: "{{ ssc_genesis }}"
-{% if ssc_genesis_url is defined %}
-          - name: GENESIS_URL
-            value: "{{ ssc_genesis_url }}"
-{% endif %}
+            value: "{{ ssc_genesis_url | default(ssc_genesis) }}"
           - name: LOGLEVEL
             value: "info"
           - name: PEERS
             value: "{{ ssc_peers }}"
-          - name: PERSISTENT_PEERS
-            value: "{{ ssc_peers }}"
           - name: EXTERNAL_ADDRESS
             value: "{{ ssc_external_address }}:26656"
 {% if statesync_enabled and ssc_rpc_servers is defined %}
+          - name: STATE_SYNC_ENABLED
+            value: "true"
           - name: SNAPSHOT_TRUST_INTERVAL
             value: "{{ statesync_trust_interval }}"
           - name: SYNC_RPC
             value: "{{ ssc_rpc_servers | join(',') }}"
+{% endif %}
+{% if snapshot_interval is defined %}
+          - name: SNAPSHOT_INTERVAL
+            value: "{{ snapshot_interval }}"
 {% endif %}
           ports:
             - containerPort: 26657
@@ -91,6 +91,7 @@ spec:
               name: grpc
             - containerPort: 26660
               name: metrics
+          command: ["/bin/sh", "/scripts/start.sh"]
           volumeMounts:
             - name: ssc-data
               mountPath: /root/.ssc
