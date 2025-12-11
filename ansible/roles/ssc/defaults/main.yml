@@ -6,6 +6,9 @@ ssc_image: "sagaxyz/ssc:{{ ssc_version }}"
 ssc_key_password: "{{ keychain_password }}"
 ssc_start_args: "--rpc.laddr tcp://0.0.0.0:26657 --p2p.laddr tcp://0.0.0.0:26656 --grpc.address 0.0.0.0:9090"
 ssc_additional_args: ""
+ssc_pruning_strategy: "custom"
+ssc_pruning_keep_recent: "1000"
+ssc_pruning_interval: "100"
 
 # SSC Resources
 ssc_resources:

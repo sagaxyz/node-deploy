@@ -16,7 +16,6 @@ snapshot_keep_recent: 2
 statesync_trust_interval: 1000
 statesync_enabled: false
 statesync_rpc_domains:
-statesync_trust_interval: 1000
 
 # Fluentd
 fluentd_enabled: false
