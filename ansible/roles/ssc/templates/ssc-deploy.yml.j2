@@ -78,6 +78,12 @@ spec:
             value: "{{ ssc_snapshot_interval }}"
           - name: SNAPSHOT_KEEP_RECENT
             value: "{{ ssc_snapshot_keep_recent }}"
+          - name: PRUNING_STRATEGY
+            value: "{{ ssc_pruning_strategy }}"
+          - name: PRUNING_KEEP_RECENT
+            value: "{{ ssc_pruning_keep_recent }}"
+          - name: PRUNING_INTERVAL
+            value: "{{ ssc_pruning_interval }}"
           ports:
             - containerPort: 26657
               name: rpc
