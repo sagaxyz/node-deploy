@@ -8,7 +8,7 @@ _cluster_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Available main commands
-    main_commands="controller chainlet chainlets validator install-completion"
+    main_commands="controller chainlet chainlets ssc validator install-completion"
     
     # Controller subcommands
     controller_subcommands="down up restart"
@@ -18,6 +18,9 @@ _cluster_completion() {
     
     # Chainlets subcommands
     chainlets_subcommands="status redeploy"
+
+    # SSC subcommands
+    ssc_subcommands="status"
 
     # Validator subcommands
     validator_subcommands="unjail status"
@@ -93,6 +96,13 @@ _cluster_completion() {
             # If we're right after 'chainlets', suggest subcommands
             if [[ ${COMP_CWORD} -eq $((main_cmd_index + 1)) ]]; then
                 COMPREPLY=($(compgen -W "${chainlets_subcommands} -h --help help" -- "${cur}"))
+                return 0
+            fi
+            ;;
+        ssc)
+            # If we're right after 'ssc', suggest subcommands
+            if [[ ${COMP_CWORD} -eq $((main_cmd_index + 1)) ]]; then
+                COMPREPLY=($(compgen -W "${ssc_subcommands} -h --help help" -- "${cur}"))
                 return 0
             fi
             ;;
