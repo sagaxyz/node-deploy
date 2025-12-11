@@ -31,3 +31,5 @@ ssc_consumer_gas_price: "0.01"
 ssc_genesis_url: "https://saga-public-assets.s3.us-east-1.amazonaws.com/genesis/staging/{{ ssc_chain_id }}_genesis.json"
 ssc_peers: "08adf15cd7ea8bae8012234d581ce7741f587083@34.9.0.15:26656"
 ssc_volume_size: "50Gi"
+ssc_rpc_servers:
+  - https://spc.staging-srv.sagarpc.io:443

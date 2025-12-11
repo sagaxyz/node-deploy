@@ -7,6 +7,7 @@ source "$(dirname "$0")/modules/shared.sh"
 source "$(dirname "$0")/modules/controller.sh"
 source "$(dirname "$0")/modules/chainlet.sh"
 source "$(dirname "$0")/modules/chainlets.sh"
+source "$(dirname "$0")/modules/ssc.sh"
 source "$(dirname "$0")/modules/validator.sh"
 
 print_usage() {
@@ -22,6 +23,7 @@ print_usage() {
     log "  controller           Controller management commands"
     log "  chainlet             Individual chainlet management commands"
     log "  chainlets            All chainlets management commands"
+    log "  ssc                  SSC management commands"
     log "  validator            Validator management commands"
     log "  install-completion   Install bash completion for this script"
     log ""
@@ -44,7 +46,7 @@ while [[ $# -gt 0 ]]; do
             print_usage
             exit 0
             ;;
-        controller|chainlet|chainlets|validator|install-completion)
+        controller|chainlet|chainlets|ssc|validator|install-completion)
             COMMAND="$1"
             shift
             # Capture subcommand and remaining arguments
@@ -84,6 +86,9 @@ case "$COMMAND" in
         ;;
     chainlets)
         handle_chainlets_command "$SUBCOMMAND" "${REMAINING_ARGS[@]}"
+        ;;
+    ssc)
+        handle_ssc_command "$SUBCOMMAND" "${REMAINING_ARGS[@]}"
         ;;
     validator)
         handle_validator_command "$SUBCOMMAND" "${REMAINING_ARGS[@]}"
