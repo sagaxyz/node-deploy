@@ -22,7 +22,6 @@ statesync_rpc_domains:
   - staging1.sagarpc.io
 
 # SSC
-ssc_enabled: true
 ssc_chain_id: "ssc-staging-2"
 ssc_denom: "utsaga"
 ssc_rpc: "http://34.9.0.15:26657"

@@ -1,5 +1,4 @@
 # SSC Configuration
-ssc_enabled: false
 ssc_mode: "fullnode"
 ssc_moniker: "{{ moniker }}"
 ssc_version: "0.4.0"
