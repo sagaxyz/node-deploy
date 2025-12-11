@@ -1,0 +1,16 @@
+- name: Generate consensus key
+  shell: openssl rand -base64 32
+  register: signer_consensus_key_raw
+  changed_when: false
+  no_log: true
+
+- name: Set consensus key fact
+  set_fact:
+    signer_consensus_key: "{{ signer_consensus_key_raw.stdout }}"
+  no_log: true
+
+- name: Deploy Signer
+  kubernetes.core.k8s:
+    state: present
+    template: templates/signer-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"
