@@ -81,7 +81,7 @@ spec:
           - name: MAINTAINERS
             value: "{{ .ChainletMaintainers }}"
           - name: VALIDATOR_ADDRESSES_COSMOS
-            value: "{{ .ChainletValidators }}"
+            value: "%%% validator_addresses %%%"
           - name: STAKE_OWNER_ADDRESS
             value: "%%% stake_owner_address %%%"
           - name: KEYPASSWD
@@ -120,9 +120,11 @@ spec:
           - name: {{ $key | ToUpper }}
             value: "{{ $value }}"
 {{ end }}
-{{ range $key, $value := .ChainletSpcVars }}
-          - name: SPCPARAM_{{ $key | ToUpper }}
+{{ if .ChainletSscVars }}
+{{ range $key, $value := .ChainletSscVars }}
+          - name: SSCPARAM_{{ $key | ToUpper }}
             value: "{{ $value }}"
+{{ end }}
 {{ end }}
           ports:
             - containerPort: 26657
