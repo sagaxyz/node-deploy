@@ -126,6 +126,10 @@ spec:
             value: "{{ $value }}"
 {{ end }}
 {{ end }}
+{{ if and .CoinDenom (not (index .ChainletSscVars "denom")) }}
+          - name: SPCPARAM_DENOM
+            value: "{{ .CoinDenom }}"
+{{ end }}
           ports:
             - containerPort: 26657
             - containerPort: 26656
