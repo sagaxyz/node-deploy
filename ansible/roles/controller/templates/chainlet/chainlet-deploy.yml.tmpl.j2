@@ -90,6 +90,8 @@ spec:
             value: "%%% aws_access_key_id %%%"
           - name: AWS_SECRET_ACCESS_KEY
             value: "%%% aws_secret_access_key %%%"
+          - name: SPCPARAM_DENOM
+            value: "{{ .CoinDenom }}"
 {% if voting_period is defined %}
           - name: VOTING_PERIOD
             value: "%%% voting_period %%%"

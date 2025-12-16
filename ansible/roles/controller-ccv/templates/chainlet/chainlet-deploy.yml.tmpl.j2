@@ -154,6 +154,8 @@ spec:
             value: "50000000"
           - name: PRUNING_STRATEGY
             value: "%%% pruning_strategy %%%"
+          - name: SPCPARAM_DENOM
+            value: "{{ .CoinDenom }}"
 {% if voting_period is defined %}
           - name: VOTING_PERIOD
             value: "%%% voting_period %%%"
