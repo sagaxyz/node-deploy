@@ -86,15 +86,12 @@ spec:
             value: "%%% stake_owner_address %%%"
           - name: KEYPASSWD
             value: "%%% keychain_password %%%"
-          {{- if .ValidatorKey }}
-          - name: VALIDATOR_KEY
-            value: "{{ .ValidatorKey }}"
-          {{- else }}
+{% if controller_remote_signer_enabled %}
           - name: REMOTE_SIGNER_ENABLED
             value: "true"
           - name: PRIV_VALIDATOR_LADDR
             value: "tcp://0.0.0.0:26658"
-          {{- end }}
+{% endif %}
           - name: AWS_ACCESS_KEY_ID
             value: "%%% aws_access_key_id %%%"
           - name: AWS_SECRET_ACCESS_KEY
@@ -141,10 +138,10 @@ spec:
             - containerPort: 8545
             - containerPort: 8546
             - containerPort: 26660
-          {{- if not .ValidatorKey }}
+{% if controller_remote_signer_enabled %}
             - containerPort: 26658
               name: privval
-          {{- end }}
+{% endif %}
           resources:
             %%% controller_chainlet_resources | to_nice_yaml(indent=2) | indent(12, true) | trim %%%
           volumeMounts:
