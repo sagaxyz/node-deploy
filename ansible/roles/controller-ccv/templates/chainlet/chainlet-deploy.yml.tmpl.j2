@@ -133,7 +133,7 @@ spec:
           - name: CHAINID
             value: "{{ .ChainId }}"
           - name: VALIDATOR_ADDRESSES_COSMOS
-            value: "%%% validator_addresses %%%"
+            value: "%%% validator_addresses.split() | join(',') %%%"
           - name: STAKE_OWNER_ADDRESS
             value: "%%% stake_owner_address %%%"
           - name: EVM_MAX_TX_GAS_WANTED

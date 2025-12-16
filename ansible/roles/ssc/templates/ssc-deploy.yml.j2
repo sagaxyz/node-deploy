@@ -112,6 +112,7 @@ spec:
                 - -c
                 - |
                   sscd status | grep -E '"catching_up": *(false|False)'
+            timeoutSeconds: 3
       volumes:
         - name: ssc-data
           persistentVolumeClaim:

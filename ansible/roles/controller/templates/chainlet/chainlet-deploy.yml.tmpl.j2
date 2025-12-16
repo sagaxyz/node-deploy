@@ -81,7 +81,7 @@ spec:
           - name: MAINTAINERS
             value: "{{ .ChainletMaintainers }}"
           - name: VALIDATOR_ADDRESSES_COSMOS
-            value: "%%% validator_addresses %%%"
+            value: "%%% validator_addresses.split() | join(',') %%%"
           - name: STAKE_OWNER_ADDRESS
             value: "%%% stake_owner_address %%%"
           - name: KEYPASSWD
@@ -122,7 +122,7 @@ spec:
 {{ end }}
 {{ if .ChainletSscVars }}
 {{ range $key, $value := .ChainletSscVars }}
-          - name: SSCPARAM_{{ $key | ToUpper }}
+          - name: SPCPARAM_{{ $key | ToUpper }}
             value: "{{ $value }}"
 {{ end }}
 {{ end }}
