@@ -22,13 +22,13 @@ statesync_rpc_domains:
   - staging1.sagarpc.io
 
 # SSC
-ssc_chain_id: "ssc-staging-2"
+ssc_chain_id: "ssc-staging-1"
 ssc_denom: "utsaga"
 ssc_rpc: "http://34.9.0.15:26657"
 ssc_grpc: "http://34.9.0.15:9090"
 ssc_consumer_gas_price: "0.01"
 ssc_genesis_url: "https://saga-public-assets.s3.us-east-1.amazonaws.com/genesis/staging/{{ ssc_chain_id }}_genesis.json"
-ssc_peers: "08adf15cd7ea8bae8012234d581ce7741f587083@34.9.0.15:26656"
+ssc_peers: "a2a8cf02d88e6a96c854b65db01d7beb0555119e@34.9.0.15:26656"
 ssc_volume_size: "50Gi"
 ssc_rpc_servers:
   - https://spc.staging-srv.sagarpc.io:443
