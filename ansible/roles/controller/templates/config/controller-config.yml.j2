@@ -4,7 +4,7 @@ listen_grpc: ":19090"
 listen_grpc_gateway: ":18090"
 listen_prometheus: ":9000"
 sync_frequency: "5s"
-mnemonic: "{{ validator_mnemonic | default('void') }}"
+mnemonic: "{{ validator_mnemonic | default(node_key_mnemonic) | mandatory('No mnemonic provided!') }}"
 ssc:
   grpc_endpoint: "ssc.sagasrv-ssc.svc.cluster.local:9090"
   state_request_timeout: "10s"
