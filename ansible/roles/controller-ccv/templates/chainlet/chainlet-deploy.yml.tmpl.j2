@@ -126,8 +126,15 @@ spec:
             value: "{{ .ChainPeers }}"
           - name: NODE_KEY
             value: "{{ .NodeKey }}"
+{% if controller_remote_signer_enabled %}
+          - name: REMOTE_SIGNER_ENABLED
+            value: "true"
+          - name: PRIV_VALIDATOR_LADDR
+            value: "tcp://0.0.0.0:26658"
+{% else %}
           - name: VALIDATOR_KEY
             value: "{{ .ValidatorKey }}"
+{% endif %}
           - name: OPTS
             value: "--pruning %%% pruning_strategy %%% --json-rpc.gas-cap 50000004 --api.enable=false --grpc.enable=true"
           - name: CHAINID
@@ -202,6 +209,10 @@ spec:
             - containerPort: 8545
             - containerPort: 8546
             - containerPort: 26660
+{% if controller_remote_signer_enabled %}
+            - containerPort: 26658
+              name: privval
+{% endif %}
           resources:
             %%% controller_chainlet_resources | to_nice_yaml(indent=2) | indent(12, true) | trim %%%
           volumeMounts:
