@@ -1,0 +1,21 @@
+- name: Check if signer consensus key secret exists
+  kubernetes.core.k8s_info:
+    kind: Secret
+    name: signer-consensus-key
+    namespace: sagasrv-signer
+    kubeconfig: "{{ kubeconfig_file }}"
+  register: signer_secret_info
+  ignore_errors: true
+
+- name: Generate new consensus key
+  shell: openssl rand -base64 32
+  register: signer_consensus_key_raw
+  changed_when: false
+  no_log: true
+  when: signer_secret_info.resources | length == 0
+
+- name: Deploy Signer
+  kubernetes.core.k8s:
+    state: present
+    template: templates/signer-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"

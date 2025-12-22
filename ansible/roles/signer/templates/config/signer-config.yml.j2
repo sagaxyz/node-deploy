@@ -1,0 +1,15 @@
+loglevel: info
+listen_grpc: "0.0.0.0:9090"
+listen_admin: "0.0.0.0:8081"
+work_dir: "/var/signer/"
+consensus_keys:
+  keys:
+    - chain_id_pattern: ".*"
+      provider: "file"
+      path: "/var/signer/consensus.key"
+tmkms:
+  binary_path: "/usr/local/bin/tmkms"
+  grace_period: "5s"
+  max_crash_backoff: "5s"
+  crash_backoff_step: "1s"
+
