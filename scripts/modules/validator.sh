@@ -19,7 +19,7 @@ validator_print_usage() {
     log "  cluster.sh validator unjail my_chain_id            # Unjail using chain_id (converts to saga-my-chain-id)"
     log "  cluster.sh validator status saga-my-chain          # Check validator status on specific chain"
     log "  cluster.sh validator status my_chain_id            # Check validator status using chain_id"
-    log "  cluster.sh validator status                        # Check validator status on SPC and all chains"
+    log "  cluster.sh validator status                        # Check validator status on SSC and all chains"
 }
 
 validator_unjail() {
@@ -49,11 +49,11 @@ validator_status_single() {
     local chain_id="${namespace#saga-}"
     chain_id="${chain_id//-/_}"
 
-    # Get moniker from SPC deployment
-    local moniker=$($KUBECTL get deployment spc -n sagasrv-spc -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="MONIKER")].value}' 2>/dev/null)
+    # Get moniker from SSC deployment
+    local moniker=$($KUBECTL get deployment ssc -n sagasrv-ssc -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="MONIKER")].value}' 2>/dev/null)
 
     if [ -z "$moniker" ]; then
-        error "Could not fetch moniker from SPC deployment"
+        error "Could not fetch moniker from SSC deployment"
         return 1
     fi
 
@@ -100,20 +100,20 @@ validator_status_single() {
     fi
 }
 
-validator_status_spc() {
-    # Get moniker from SPC deployment
-    local moniker=$($KUBECTL get deployment spc -n sagasrv-spc -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="MONIKER")].value}' 2>/dev/null)
+validator_status_ssc() {
+    # Get moniker from SSC deployment
+    local moniker=$($KUBECTL get deployment ssc -n sagasrv-ssc -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="MONIKER")].value}' 2>/dev/null)
 
     if [ -z "$moniker" ]; then
-        error "Could not fetch moniker from SPC deployment"
+        error "Could not fetch moniker from SSC deployment"
         return 1
     fi
 
-    # Query validators in SPC
-    local validators_output=$($KUBECTL exec deployment/spc -n sagasrv-spc -- spcd q staking validators --output json 2>/dev/null)
+    # Query validators in SSC
+    local validators_output=$($KUBECTL exec deployment/ssc -n sagasrv-ssc -- sscd q staking validators --output json 2>/dev/null)
 
     if [ $? -ne 0 ] || [ -z "$validators_output" ]; then
-        error "Failed to query validators in SPC"
+        error "Failed to query validators in SSC"
         return 1
     fi
 
@@ -143,12 +143,12 @@ validator_status_spc() {
 
         if [ "$jailed" = "true" ]; then
             status_msg="$status_msg, Jailed"
-            echo -e "\033[31m[SUCCESS] [SPC] Validator '$moniker' is in the validator set - Status: $status_msg\033[0m"
+            echo -e "\033[31m[SUCCESS] [SSC] Validator '$moniker' is in the validator set - Status: $status_msg\033[0m"
         else
-            success "[SPC] Validator '$moniker' is in the validator set - Status: $status_msg"
+            success "[SSC] Validator '$moniker' is in the validator set - Status: $status_msg"
         fi
     else
-        warning "[SPC] Validator '$moniker' is NOT in the validator set"
+        warning "[SSC] Validator '$moniker' is NOT in the validator set"
     fi
 }
 
@@ -160,20 +160,20 @@ validator_status() {
         log "Checking validator status in namespace: $namespace"
         validator_status_single "$namespace"
     else
-        # Check status for all chains including SPC
-        log "Checking validator status on SPC and all chains..."
+        # Check status for all chains including SSC
+        log "Checking validator status on SSC and all chains..."
         # Create temporary directory for parallel processing
         local tmp_dir=$(mktemp -d)
         local pids=()
-        # Start SPC status check in parallel
-        local spc_output_file="$tmp_dir/spc.txt"
+        # Start SSC status check in parallel
+        local ssc_output_file="$tmp_dir/ssc.txt"
         (
-            validator_status_spc > "$spc_output_file" 2>&1
-            echo $? > "$spc_output_file.exit"
+            validator_status_ssc > "$ssc_output_file" 2>&1
+            echo $? > "$ssc_output_file.exit"
         ) &
         pids+=($!)
-        # Get list of online chainlets from SPC
-        local chainlets=$($KUBECTL exec -n sagasrv-spc deployment/spc -- spcd q chainlet list-chainlets --limit 1000 --output json 2>/dev/null | jq -r '.Chainlets[] | select(.status == "STATUS_ONLINE") | .chainId')
+        # Get list of online chainlets from SSC
+        local chainlets=$($KUBECTL exec -n sagasrv-ssc deployment/ssc -- sscd q chainlet list-chainlets --limit 1000 --output json 2>/dev/null | jq -r '.Chainlets[] | select(.status == "STATUS_ONLINE") | .chainId')
         if [ -n "$chainlets" ]; then
             # Start parallel status checks for chainlets
             for chainlet in $chainlets; do
@@ -192,12 +192,12 @@ validator_status() {
         for pid in "${pids[@]}"; do
             wait $pid
         done
-        # Display results (SPC first, then chainlets)
-        if [ -f "$spc_output_file" ]; then
-            cat "$spc_output_file"
+        # Display results (SSC first, then chainlets)
+        if [ -f "$ssc_output_file" ]; then
+            cat "$ssc_output_file"
         fi
         for file in "$tmp_dir"/*.txt; do
-            if [ -f "$file" ] && [ ! "${file%.exit}" != "$file" ] && [ "$file" != "$spc_output_file" ]; then
+            if [ -f "$file" ] && [ ! "${file%.exit}" != "$file" ] && [ "$file" != "$ssc_output_file" ]; then
                 cat "$file"
             fi
         done

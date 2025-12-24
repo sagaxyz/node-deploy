@@ -6,7 +6,7 @@ source "$(dirname "$0")/../shared/log.sh"
 print_usage() {
     log "Usage: $0 [OPTIONS]"
     log ""
-    log "Check the sync status of SPC and all online chainlets"
+    log "Check the sync status of SSC and all online chainlets"
     log ""
     log "OPTIONS:"
     log "  --kubeconfig PATH    Path to kubeconfig file (optional)"
@@ -19,7 +19,7 @@ print_usage() {
     log ""
     log "DESCRIPTION:"
     log "  This script checks the synchronization status of:"
-    log "  - SPC (Saga Protocol Chain) node"
+    log "  - SSC (Saga Staking Chain) node"
     log "  - All online chainlets in the cluster"
     log ""
     log "  Exit codes:"
@@ -63,22 +63,22 @@ fi
 
 log ""
 
-spc_status=$($KUBECTL exec -n sagasrv-spc deployment/spc -- spcd status | jq -r '(.SyncInfo // .sync_info) | .catching_up')
-case "$spc_status" in
+ssc_status=$($KUBECTL exec -n sagasrv-ssc deployment/ssc -- sscd status | jq -r '(.SyncInfo // .sync_info) | .catching_up')
+case "$ssc_status" in
     "true")
-        error "SPC is still catching up"
+        error "SSC is still catching up"
         exit 1
         ;;
     "false")
-        success "SPC is in sync"
+        success "SSC is in sync"
         ;;
     *)
-        error "Unable to fetch SPC status"
+        error "Unable to fetch SSC status"
         exit 1
         ;;
 esac
 
-chainlets=$($KUBECTL exec -n sagasrv-spc deployment/spc -- spcd q chainlet list-chainlets --limit 1000 --output json | jq -r '.Chainlets[] | select(.status == "STATUS_ONLINE") | .chainId')
+chainlets=$($KUBECTL exec -n sagasrv-ssc deployment/ssc -- sscd q chainlet list-chainlets --limit 1000 --output json | jq -r '.Chainlets[] | select(.status == "STATUS_ONLINE") | .chainId')
 if [ -z "$chainlets" ]; then
     error "No chainlets found"
     exit 1
