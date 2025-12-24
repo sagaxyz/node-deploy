@@ -1,7 +1,7 @@
 # SSC Configuration
 ssc_mode: "fullnode"
 ssc_moniker: "{{ moniker }}"
-ssc_version: "2.0.0"
+ssc_version: "3.0.0"
 ssc_image: "sagaxyz/ssc:{{ ssc_version }}"
 ssc_key_password: "{{ keychain_password }}"
 ssc_start_args: "--rpc.laddr tcp://0.0.0.0:26657 --p2p.laddr tcp://0.0.0.0:26656 --grpc.address 0.0.0.0:9090"
