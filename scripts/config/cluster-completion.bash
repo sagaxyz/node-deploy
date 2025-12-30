@@ -11,7 +11,7 @@ _cluster_completion() {
     main_commands="controller chainlet chainlets ssc validator install-completion"
     
     # Controller subcommands
-    controller_subcommands="down up restart"
+    controller_subcommands="down up restart logs"
     
     # Chainlet subcommands
     chainlet_subcommands="restart redeploy wipe logs status height expand-pvc"
