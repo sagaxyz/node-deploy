@@ -45,7 +45,7 @@ cd ansible
 ansible-playbook -e @<inventory_file> -e <secrets_file> --vault-password-file <vault_password_file> playbooks/deploy.yml
 ```
 
-This will install all the roles in the right order: metrics (if enabled), ingress-nginx (if `expose_p2p`), spc, ssc (if enabled), and controller. The latter is responsible to spinup all the chainlets once SPC is in sync.
+This will install all the roles in the right order: metrics (if enabled), ingress-nginx (if `expose_p2p`), ssc and controller. The latter is responsible to spinup all the chainlets once SSC is in sync.
 
 ### SSC (Saga Security Chain)
 
@@ -75,13 +75,13 @@ If you are already running a validator on AWS EKS, follow this part to migrate. 
 ### Scale down the old cluster
 **After making sure the new cluster is in sync**
 - Switch context to old EKS cluster (or pass `--kubeconfig <kubeconfig_file>` to the kubectl commands)
-- Scale down spc: `kubectl scale deployment spc -n sagasrv-spc --replicas=0`
+- Scale down ssc: `kubectl scale deployment ssc -n sagasrv-ssc --replicas=0`
 - Scale down controller: `scripts/cluster.sh controller down`
 - Scale down chainlets: `kubectl get pods -A | grep chainlet | awk '{print $1}' | xargs -I{} kubectl -n {} scale deployment/chainlet --replicas=0`
 - Verify all the chainlets are terminated: `kubectl get pods -A | grep chainlet` should be empty
 
-**If something goes wrong, scale SPC and Controller back up**
-- SPC: `kubectl scale deployment spc -n sagasrv-spc --replicas=1`
+**If something goes wrong, scale SSC and Controller back up**
+- SSC: `kubectl scale deployment ssc -n sagasrv-ssc --replicas=1`
 - Controller: `scripts/cluster.sh controller up`
 The controller will scale chainlets back up and the validator will be restored.
 
@@ -92,7 +92,7 @@ The controller will scale chainlets back up and the validator will be restored.
 
 - In the inventory set `mode: validator`
 - Make sure you have the `validator_mnemonic` correctly set
-- Wipe out SPC: `kubectl delete deployment spc -n sagasrv-spc && kubectl delete pvc spc-pvc -n sagasrv-spc`
+- Wipe out SSC: `kubectl delete deployment ssc -n sagasrv-ssc && kubectl delete pvc ssc-pvc -n sagasrv-ssc`
 - Redeploy ([Deploy](#deploy))
 - Restart the controller: `scripts/cluster.sh controller restart`
 - Redeploy every chainlet deleting the deployment and having the controller redeploy it as validator: `scripts/cluster.sh chainlets redeploy` and then execute the commands in the output.
@@ -101,16 +101,16 @@ Now you should be able to see all the chainlets restarting: `kubectl get pods -A
 
 ## Run a devnet cluster
 Devnet cluster is meant for development. It can run a single validator cluster. It is deployed like every other cluster (just `network: devnet`). By default it comes without metrics and does not expose p2p nor other services. For this reasons, transactions will require port-forwarding. E.g.:
-- SPC: `kubectl port-forward -n sagasrv-spc service/spc 26657:26657`. Then `spcd --node http://localhost:26657 <your_command>`
+- SSC: `kubectl port-forward -n sagasrv-ssc service/ssc 26657:26657`. Then `sscd --node http://localhost:26657 <your_command>`
 - Chainlets: `kubectl port-forward -n saga-<chain_id> service/chainlet 26657:26657`. Then `sagaosd --node http://localhost:26657 <your_command>`
 
-Alternatively, spc and chainlets can be exposed setting `expose_p2p: true`. Also metrics can be deployed setting `metrics_enabled: true`.
+Alternatively, ssc and chainlets can be exposed setting `expose_p2p: true`. Also metrics can be deployed setting `metrics_enabled: true`.
 
 ### Launch your first chainlet
-- Port forward spc: `kubectl port-forward -n sagasrv-spc service/spc 26657:26657`
-- Create chainlet stack: `spcd --node http://localhost:26657 tx chainlet create-chainlet-stack SagaOS "SagaOS Chainlet Stack" sagaxyz/sagaos:0.13.1 0.13.1 sha256:ced72e81e44926157e56d1c9dd3c0de5a5af50c2a87380f4be80d9d5196d86d3 100upsaga day 100upsaga --fees 2000upsaga --from saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 -y --chain-id <your_chain_id>`. Just use the "foundation" addres set up and the desired sagaosd version and make sure you set the right chain_id for spc based on your inventory.
-- Launch chainlet `spcd --node http://localhost:26657 tx chainlet launch-chainlet saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 SagaOS 0.13.1 myfirstchainlet '{"denom":"gas","gasLimit":10000000,"genAcctBalances":"saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2=1000000000","feeAccount":"saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2"}' --fees 500000upsaga --gas 800000 --from saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 --yes --chain-id <your_chain_id>`
-- (optional) Stop port spc forward process.
+- Port forward ssc: `kubectl port-forward -n sagasrv-ssc service/ssc 26657:26657`
+- Create chainlet stack: `sscd --node http://localhost:26657 tx chainlet create-chainlet-stack SagaOS "SagaOS Chainlet Stack" sagaxyz/sagaos:0.13.1 0.13.1 sha256:ced72e81e44926157e56d1c9dd3c0de5a5af50c2a87380f4be80d9d5196d86d3 100upsaga day 100upsaga --fees 2000upsaga --from saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 -y --chain-id <your_chain_id>`. Just use the "foundation" addres set up and the desired sagaosd version and make sure you set the right chain_id for ssc based on your inventory.
+- Launch chainlet `sscd --node http://localhost:26657 tx chainlet launch-chainlet saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 SagaOS 0.13.1 myfirstchainlet '{"denom":"gas","gasLimit":10000000,"genAcctBalances":"saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2=1000000000","feeAccount":"saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2"}' --fees 500000upsaga --gas 800000 --from saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2 --yes --chain-id <your_chain_id>`
+- (optional) Stop port ssc forward process.
 - Port forward your chainlet RPC: `kubectl port-forward -n saga-<chain_id> service/chainlet 26657:26657`
 - Execute any cosmos transaction using `sagaosd --node http://localhost:26657 <your_command>`.
 
@@ -140,7 +140,7 @@ Collection of util commands to interact with the cluster. The script is organize
 
 #### Validator Commands
 - `validator unjail <identifier>` Unjail validator by namespace or chain_id
-- `validator status [<identifier>]` Check validator status on chain(s) - fetches moniker from SPC and checks if validator is in the active set (includes SPC when no identifier specified)
+- `validator status [<identifier>]` Check validator status on chain(s) - fetches moniker from SSC and checks if validator is in the active set (includes SSC when no identifier specified)
 
 #### Other Commands
 - `install-completion`            Install bash completion for cluster.sh
@@ -168,7 +168,7 @@ scripts/cluster.sh validator unjail saga-my-chain
 scripts/cluster.sh validator unjail my_chain_id
 scripts/cluster.sh validator status saga-my-chain    # Check status on specific chain
 scripts/cluster.sh validator status my_chain_id      # Check status using chain_id
-scripts/cluster.sh validator status                  # Check status on SPC and all chains
+scripts/cluster.sh validator status                  # Check status on SSC and all chains
 ```
 
 Optionally, pass `--kubeconfig <your_kubeconfig>` to use a different context than the current. Use `scripts/cluster.sh --help` or `scripts/cluster.sh COMMAND --help` for detailed usage information.

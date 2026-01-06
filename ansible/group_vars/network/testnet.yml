@@ -1,6 +1,4 @@
-# Chains config (spc and chainlets)
-spc_chain_id: spc-testnet-2
-spc_volume_size: 25Gi
+# Chainlets
 s3_bucket: s3://testnet-prod-v2
 quorum_count: 4
 validator_addresses: saga1atjuvcf4aq3upr5eacacpv08lkp39v8208gw6z saga12uch6j240eqv5zgpr4f4zyy4c3gf923ky9qyru saga1hvm67hnpmfc5pfpeqqmung4kjqcavzatjegxu9 saga16rga04jaj3qsfwcm8w3m9hupx828k3lshzpz2j
