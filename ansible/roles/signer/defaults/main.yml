@@ -1,0 +1,17 @@
+# Signer Configuration
+signer_enabled: false
+signer_version: "0.2.0"
+signer_image: "sagaxyz/signer:v{{ signer_version }}"
+
+# Signer Resources
+signer_resources:
+  requests:
+    memory: "256Mi"
+    cpu: "0.2"
+  limits:
+    memory: "512Mi"
+    cpu: "0.5"
+
+# Signer Storage
+signer_storage_class: "saga-default"
+signer_volume_size: "100Mi"
