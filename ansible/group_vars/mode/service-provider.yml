@@ -1,3 +1,2 @@
 validator_provider: 0
-spc_additional_args: "--api.enable --api.address tcp://0.0.0.0:1317"
 snapshot_enabled: true

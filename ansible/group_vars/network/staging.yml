@@ -1,6 +1,4 @@
-# Chains config (spc and chainlets)
-spc_chain_id: spc-staging-1
-spc_volume_size: 50Gi
+# Chainlets
 s3_bucket: s3://testnet-staging
 quorum_count: 2
 validator_addresses: saga10h0ngnu5cz0e2v5k6pdz2l5xhl3edhnlqvrdd2 saga1uhuu689scjs9jpcyuapzdvxdxyh3rz46n29cdn
@@ -31,4 +29,4 @@ ssc_genesis_url: "https://saga-public-assets.s3.us-east-1.amazonaws.com/genesis/
 ssc_peers: "a2a8cf02d88e6a96c854b65db01d7beb0555119e@34.9.0.15:26656"
 ssc_volume_size: "50Gi"
 ssc_rpc_servers:
-  - https://spc.staging-srv.sagarpc.io:443
+  - https://ssc.staging-srv.sagarpc.io:443
