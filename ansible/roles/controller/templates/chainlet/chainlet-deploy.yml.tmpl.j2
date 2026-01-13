@@ -76,6 +76,8 @@ spec:
             value: "info"
           - name: KEYNAME
             value: "chainlet-operator-key"
+          - name: NODE_KEY
+            value: "{{ .NodeKey }}"
           - name: EXTERNAL_ADDRESS
             value: "{{ .ChainletExternalAddress }}"
           - name: MAINTAINERS
