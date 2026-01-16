@@ -93,6 +93,8 @@ spec:
               name: grpc
             - containerPort: 26660
               name: metrics
+            - containerPort: 1317
+              name: api
           volumeMounts:
             - name: ssc-data
               mountPath: /root/.ssc
@@ -145,5 +147,8 @@ spec:
     - name: metrics
       port: 26660
       targetPort: 26660
+    - name: api
+      port: 1317
+      targetPort: 1317
   selector:
     app: ssc
