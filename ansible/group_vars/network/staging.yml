@@ -5,8 +5,15 @@ validator_addresses: saga10h0ngnu5cz0e2v5k6pdz2l5xhl3edhnlqvrdd2 saga1uhuu689scj
 stake_owner_address: saga1z3q8z0k6ygzs8krcd4u3s6ewa8de8nr645hh0l
 foundation_wallet_address: saga1nmu5laudnkpcn6jlejrv8dprumqtj00ujl0zk2
 is_testnet: true
-controller_chainlet_pvc_size: "50Gi"
+controller_chainlet_pvc_size: "10Gi"
 hub_chain_id: hub_5464113-1
+controller_chainlet_resources:
+  requests:
+    memory: "0.5Gi"
+    cpu: "0.25"
+  limits:
+    memory: "2Gi"
+    cpu: "1.5"
 
 # Enabled components
 expose_p2p: true
@@ -17,16 +24,16 @@ metrics_alertmanager_enabled: false
 # StateSync
 statesync_rpc_domains:
   - staging-srv.sagarpc.io
-  - staging1.sagarpc.io
+  - staging-srv.sagarpc.io
+  # - staging1.sagarpc.io
 
 # SSC
 ssc_chain_id: "ssc-staging-1"
 ssc_denom: "utsaga"
-ssc_rpc: "http://34.9.0.15:26657"
-ssc_grpc: "http://34.9.0.15:9090"
 ssc_consumer_gas_price: "0.01"
 ssc_genesis_url: "https://saga-public-assets.s3.us-east-1.amazonaws.com/genesis/staging/{{ ssc_chain_id }}_genesis.json"
 ssc_peers: "a2a8cf02d88e6a96c854b65db01d7beb0555119e@34.9.0.15:26656"
-ssc_volume_size: "50Gi"
+ssc_volume_size: "10Gi"
 ssc_rpc_servers:
-  - https://ssc.staging-srv.sagarpc.io:443
+  - https://ssc.jsonrpc.staging-srv.sagarpc.io:443
+  - https://ssc.jsonrpc.staging-srv.sagarpc.io:443

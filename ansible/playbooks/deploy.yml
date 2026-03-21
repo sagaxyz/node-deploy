@@ -1,5 +1,5 @@
 - name: Deploy Saga Pegasus stack
-  hosts: localhost
+  hosts: all
   connection: local
   gather_facts: false
 
@@ -18,22 +18,11 @@
     - "{{ playbook_dir }}/../group_vars/all.yml"
     - "{{ playbook_dir }}/../group_vars/network/{{ network }}.yml"
     - "{{ playbook_dir }}/../group_vars/mode/{{ mode }}.yml"
-  
-  pre_tasks:
-    - name: Validate network parameter
-      fail:
-        msg: "Invalid or missing 'network'. Must be one of: {{ supported_networks | join(', ') }}"
-      when: network is not defined or network not in supported_networks
-
-    - name: Validate mode parameter
-      fail:
-        msg: "Invalid or missing 'mode'. Must be one of: {{ supported_modes | join(', ') }}"
-      when: mode is not defined or mode not in supported_modes
+    - "{{ playbook_dir }}/../group_vars/cloud-provider/{{ cloud_provider }}.yml"
 
   roles:
     - { role: metrics, tags: [metrics], when: metrics_enabled }
     - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
     - { role: ssc, tags: [ssc] }
-    - { role: controller-ccv, tags: [controller], when: controller_ccv }
-    - { role: controller, tags: [controller], when: not controller_ccv }
+    - { role: controller, tags: [controller] }
     - { role: signer, tags: [signer], when: signer_enabled | bool }

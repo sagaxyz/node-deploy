@@ -42,6 +42,17 @@ spec:
     requests:
       storage: "%%% controller_chainlet_pvc_size %%%"
 ---
+{% if controller_override_start_script %}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Name }}-start-script"
+  namespace: "{{ .Namespace }}"
+data:
+  start.sh: |
+%%% lookup('file', controller_start_script_path) | indent(4, true) %%%
+---
+{% endif %}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -208,12 +219,24 @@ spec:
             - name: "chainlet-volume"
               mountPath: "/root/.sagaosd"
               subPath: sagaosd
+{% if controller_override_start_script %}
+            - name: "{{ .Name }}-start-script"
+              mountPath: "/root/start.sh"
+              subPath: start.sh
+              readOnly: true
+{% endif %}
 {% if fluentd_enabled %}
             - name: "fluentd-logs"
               mountPath: "/var/log/saga"
               subPathExpr: $(UID)
 {% endif %}
       volumes:
+{% if controller_override_start_script %}
+        - name: "{{ .Name }}-start-script"
+          configMap:
+            name: "{{ .Name }}-start-script"
+            defaultMode: 0755
+{% endif %}
         - name: "chainlet-volume"
           persistentVolumeClaim:
             claimName: "chainlet-pvc"

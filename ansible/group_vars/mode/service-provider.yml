@@ -1,2 +1,2 @@
 validator_provider: 0
-snapshot_enabled: true
+pruning_strategy: default

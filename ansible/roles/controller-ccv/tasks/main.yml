@@ -1,3 +1,19 @@
+- name: Stat override start script (local)
+  ansible.builtin.stat:
+    path: "{{ controller_start_script_path }}"
+  register: controller_start_script_stat
+  when: controller_override_start_script
+
+- name: Validate controller_start_script_path when overriding chainlet start script
+  ansible.builtin.assert:
+    that:
+      - controller_start_script_path is defined
+      - controller_start_script_path | length > 0
+      - controller_start_script_stat.stat.exists
+      - controller_start_script_stat.stat.isreg
+    fail_msg: "Set controller_start_script_path to a local file path when controller_override_start_script=true"
+  when: controller_override_start_script
+
 - name: Generate chainlet template
   ansible.builtin.template:
     src: templates/chainlet/chainlet.yml.tmpl.j2

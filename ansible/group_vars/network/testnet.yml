@@ -16,18 +16,16 @@ metrics_alertmanager_enabled: true
 
 # StateSync
 statesync_rpc_domains:
-  - st1.sagarpc.io
   - stsrv1.sagarpc.io
+  - st1.sagarpc.io
 
 # SSC (disabled by default for testnet)
 ssc_chain_id: "ssc-testnet-3"
 ssc_denom: "utsaga"
-ssc_rpc: "https://testnet2-keplr.sagarpc.io:443"
 ssc_consumer_gas_price: "0.01"
-ssc_grpc: "https://testnet2-grpc.sagarpc.io:9090"
 ssc_genesis_url: "https://raw.githubusercontent.com/sagaxyz/testnet-3/refs/heads/main/config/genesis.json"
 ssc_volume_size: "25Gi"
 ssc_rpc_servers:
-  - https://testnet2-statesync-us.sagarpc.io:443
   - https://testnet2-keplr.sagarpc.io:443
-ssc_peers: "0996387825b4dd13e9874083e032f9cc5a70eb7f@35.198.81.158:26656,59a5a53073fba0643ee0ff233382e14b09725536@35.222.27.231:26656,14de48e16239cd1e4287bbc2c4ebd43234ea29a9@34.22.84.137:26656"
+  - https://testnet2-keplr.sagarpc.io:443
+ssc_peers: "4cbd2ae71e1cd58d64568a95a7f24d0bdf86cb83@184.107.182.148:57600,c9377aab40b7361c1705dfdf4526035ecfa9518c@65.21.111.137:26656,1686f61de8fffce1cb93b51783aa1ddfd06302b6@93.115.24.179:26656,72740e63a77dbadd69036bc8fcef7c8fe6950d12@65.21.220.178:26656,9d15565cbef6e1f630e8875ac358dee42f4530eb@80.64.208.45:26656,cff377766a8291d55948d399a6bd5d8f17fef802@saga-testnet-p2p-0.tm.p2p.world:26656"
