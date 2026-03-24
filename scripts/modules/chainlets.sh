@@ -13,10 +13,12 @@ chainlets_print_usage() {
     log "SUBCOMMANDS:"
     log "  status      Show status of all chainlets"
     log "  redeploy    Redeploy all chainlet deployments in saga-* namespaces"
+    log "  versions    Show chainletStackVersion for all online chainlets"
     log ""
     log "EXAMPLES:"
     log "  cluster.sh chainlets status                            # Show all chainlets status"
     log "  cluster.sh chainlets redeploy                          # Redeploy all chainlets"
+    log "  cluster.sh chainlets versions                          # Show stack versions of online chainlets"
 }
 
 chainlets_status() {
@@ -84,6 +86,45 @@ chainlets_redeploy() {
     fi
 }
 
+chainlets_versions() {
+    # Fetch all online chainlets from SSC and print chainletStackVersion
+    if ! $KUBECTL get deployment/ssc -n sagasrv-ssc >/dev/null 2>&1; then
+        error "SSC deployment not found in namespace 'sagasrv-ssc'"
+        exit 1
+    fi
+
+    local chainlets_json
+    if ! chainlets_json=$($KUBECTL exec -n sagasrv-ssc deployment/ssc -- sscd q chainlet list-chainlets --limit 1000 --output json 2>/dev/null); then
+        error "Failed to fetch chainlets list from SSC"
+        exit 1
+    fi
+
+    local count
+    count=$(echo "$chainlets_json" | jq -r '[.Chainlets[]? | select(.status == "STATUS_ONLINE")] | length' 2>/dev/null)
+    if [ -z "$count" ] || [ "$count" = "null" ]; then
+        error "Failed to parse chainlets list output"
+        exit 1
+    fi
+
+    if [ "$count" -eq 0 ]; then
+        warning "No online chainlets found"
+        exit 0
+    fi
+
+    # Print one per line: "<chainId> <chainletStackVersion (bold)>"
+    while IFS=$'\t' read -r chain_id stack_version; do
+        if [ -n "$chain_id" ]; then
+            log "${chain_id} ${BOLD}${stack_version}${NC}"
+        fi
+    done < <(
+        echo "$chainlets_json" | jq -r '
+          .Chainlets[]
+          | select(.status == "STATUS_ONLINE")
+          | "\(.chainId)\t\(.chainletStackVersion // "")"
+        ' 2>/dev/null
+    )
+}
+
 # Main chainlets command handler
 handle_chainlets_command() {
     local subcommand="$1"
@@ -94,6 +135,9 @@ handle_chainlets_command() {
             ;;
         redeploy)
             chainlets_redeploy
+            ;;
+        versions)
+            chainlets_versions
             ;;
         -h|--help|help|"")
             chainlets_print_usage

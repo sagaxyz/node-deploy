@@ -19,6 +19,8 @@ chainlet_print_usage() {
     log "  status <identifier>            Show sync status for a specific chainlet"
     log "  height <identifier>            Show current block height for a specific chainlet"
     log "  expand-pvc <identifier> [%]    Expand chainlet PVC by percentage (default: 20%)"
+    log "  debug-on <identifier>          Override chainlet container command to ['sleep','infinity']"
+    log "  debug-off <identifier>         Remove command override (defaults to image command)"
     log ""
     log "EXAMPLES:"
     log "  cluster.sh chainlet restart saga-my-chain              # Restart using full namespace"
@@ -35,6 +37,8 @@ chainlet_print_usage() {
     log "  cluster.sh chainlet height my_chain_id                 # Show block height using chain_id"
     log "  cluster.sh chainlet expand-pvc saga-my-chain           # Expand PVC by 20% (default)"
     log "  cluster.sh chainlet expand-pvc my_chain_id 50          # Expand PVC by 50%"
+    log "  cluster.sh chainlet debug-on saga-my-chain             # Keep pod alive for debugging"
+    log "  cluster.sh chainlet debug-off saga-my-chain            # Restore default command"
 }
 
 chainlet_restart() {
@@ -260,6 +264,82 @@ chainlet_expand_pvc() {
     fi
 }
 
+chainlet_debug_on() {
+    local identifier="$1"
+    if [ -z "$identifier" ]; then
+        error "debug-on command requires an identifier (namespace or chain_id)"
+        echo ""
+        chainlet_print_usage
+        exit 1
+    fi
+
+    local namespace
+    namespace=$(get_namespace "$identifier")
+    log "Enabling debug mode for chainlet in namespace: $namespace"
+
+    # Ensure deployment exists and capture its current container name (defaults to index 0)
+    local deploy_json
+    if ! deploy_json=$($KUBECTL get deployment/chainlet -n "$namespace" -o json 2>/dev/null); then
+        error "Chainlet deployment not found in namespace '$namespace'"
+        exit 1
+    fi
+
+    local container_name
+    container_name=$(echo "$deploy_json" | jq -r '.spec.template.spec.containers[0].name // empty')
+    if [ -z "$container_name" ] || [ "$container_name" = "null" ]; then
+        container_name="chainlet"
+    fi
+
+    local patch
+    patch=$(cat <<EOF
+{"spec":{"template":{"spec":{"containers":[{"name":"$container_name","command":["sleep","infinity"]}]}}}}
+EOF
+)
+
+    if $KUBECTL patch deployment/chainlet -n "$namespace" --type='strategic' -p "$patch" >/dev/null; then
+        success "✅ Debug mode enabled (command overridden to ['sleep','infinity'])"
+        log "The pod will be recreated automatically by the deployment."
+    else
+        error "Failed to enable debug mode for chainlet in namespace '$namespace'"
+        exit 1
+    fi
+}
+
+chainlet_debug_off() {
+    local identifier="$1"
+    if [ -z "$identifier" ]; then
+        error "debug-off command requires an identifier (namespace or chain_id)"
+        echo ""
+        chainlet_print_usage
+        exit 1
+    fi
+
+    local namespace
+    namespace=$(get_namespace "$identifier")
+    log "Disabling debug mode for chainlet in namespace: $namespace"
+
+    local deploy_json
+    if ! deploy_json=$($KUBECTL get deployment/chainlet -n "$namespace" -o json 2>/dev/null); then
+        error "Chainlet deployment not found in namespace '$namespace'"
+        exit 1
+    fi
+
+    # If the command override is already absent, treat as success (idempotent)
+    if ! echo "$deploy_json" | jq -e '.spec.template.spec.containers[0].command' >/dev/null 2>&1; then
+        success "✅ Debug mode already disabled (no command override present)"
+        return 0
+    fi
+
+    if $KUBECTL patch deployment/chainlet -n "$namespace" --type='json' \
+        -p='[{"op":"remove","path":"/spec/template/spec/containers/0/command"}]' >/dev/null; then
+        success "✅ Debug mode disabled (command override removed)"
+        log "The pod will be recreated automatically by the deployment."
+    else
+        error "Failed to disable debug mode for chainlet in namespace '$namespace'"
+        exit 1
+    fi
+}
+
 # Main chainlet command handler
 handle_chainlet_command() {
     local subcommand="$1"
@@ -286,6 +366,12 @@ handle_chainlet_command() {
             ;;
         expand-pvc)
             chainlet_expand_pvc "$1" "$2"
+            ;;
+        debug-on)
+            chainlet_debug_on "$1"
+            ;;
+        debug-off)
+            chainlet_debug_off "$1"
             ;;
         -h|--help|help|"")
             chainlet_print_usage

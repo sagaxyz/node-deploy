@@ -1,2 +1,3 @@
 validator_provider: 1
-snapshot_enabled: false
+pruning_strategy: custom
+controller_chainlet_pvc_size: 2Gi

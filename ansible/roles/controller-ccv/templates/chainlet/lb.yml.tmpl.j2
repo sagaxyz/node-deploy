@@ -3,9 +3,9 @@ kind: Service
 metadata:
   name: "{{ '{{ .Name }}' }}"
   namespace: "{{ '{{ .Namespace }}' }}"
-{% if lb_annotations is defined %}
+{% if controller_lb_annotations is defined %}
   annotations:
-    {{ lb_annotations }}
+    {{ controller_lb_annotations }}
 {% endif %}
   labels:
     app.kubernetes.io/component: controller

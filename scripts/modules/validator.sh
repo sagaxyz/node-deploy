@@ -34,7 +34,7 @@ validator_unjail() {
     local namespace=$(get_namespace "$identifier")
     log "Unjailing validator in namespace: $namespace"
 
-    log_and_execute_cmd $KUBECTL exec deployment/chainlet -n "$namespace" -- bash -c \''echo $KEYPASSWD | sagaosd tx slashing unjail --fees 2000stake -y --from chainlet-operator-key'\'
+    log_and_execute_cmd $KUBECTL exec deployment/chainlet -n "$namespace" -- bash -c \''echo $KEYPASSWD | sagaosd tx slashing unjail --fees 500stake -y --from chainlet-operator-key'\'
 
     if [ $? -eq 0 ]; then
         success "Validator in namespace '$namespace' unjailed successfully"

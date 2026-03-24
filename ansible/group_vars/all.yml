@@ -4,11 +4,11 @@ ansible_host: 127.0.0.1
 
 # Chainlets
 loglevel: info
-pruning_strategy: default
 stake_amount: 1500000
 staking_fees: 100000
 
 # Snapshots
+snapshot_enabled: true
 snapshot_interval: 1000
 snapshot_keep_recent: 2
 
