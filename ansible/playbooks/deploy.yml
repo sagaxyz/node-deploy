@@ -1,4 +1,33 @@
-- name: Deploy Saga Pegasus stack
+- name: Deploy Saga Pegasus stack (env config)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    supported_networks:
+      - mainnet
+      - testnet
+      - staging
+      - devnet
+    supported_modes:
+      - validator
+      - fullnode
+      - service-provider
+
+  vars_files:
+    - "{{ playbook_dir }}/../group_vars/all.yml"
+    - "{{ playbook_dir }}/../group_vars/network/{{ network }}.yml"
+    - "{{ playbook_dir }}/../group_vars/mode/{{ mode }}.yml"
+    - "{{ playbook_dir }}/../group_vars/cloud-provider/{{ cloud_provider }}.yml"
+
+  roles:
+    - { role: metrics, tags: [metrics], when: metrics_enabled }
+    - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
+    - { role: ssc, tags: [ssc] }
+    - { role: controller, tags: [controller] }
+    - { role: signer, tags: [signer], when: signer_enabled | bool }
+
+- name: Deploy Saga Pegasus stack (hosts config)
   hosts: all
   connection: local
   gather_facts: false
