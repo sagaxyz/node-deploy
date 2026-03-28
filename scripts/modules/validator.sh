@@ -13,6 +13,7 @@ validator_print_usage() {
     log "SUBCOMMANDS:"
     log "  unjail <identifier>            Unjail validator by namespace or chain_id"
     log "  status [<identifier>]          Check validator status on chain(s)"
+    log "  vote <identifier> <proposal>   Vote YES on a governance proposal"
     log ""
     log "EXAMPLES:"
     log "  cluster.sh validator unjail saga-my-chain          # Unjail using full namespace"
@@ -20,6 +21,7 @@ validator_print_usage() {
     log "  cluster.sh validator status saga-my-chain          # Check validator status on specific chain"
     log "  cluster.sh validator status my_chain_id            # Check validator status using chain_id"
     log "  cluster.sh validator status                        # Check validator status on SSC and all chains"
+    log "  cluster.sh validator vote saga-my-chain 12         # Vote YES on proposal 12"
 }
 
 validator_unjail() {
@@ -34,12 +36,43 @@ validator_unjail() {
     local namespace=$(get_namespace "$identifier")
     log "Unjailing validator in namespace: $namespace"
 
-    log_and_execute_cmd $KUBECTL exec deployment/chainlet -n "$namespace" -- bash -c \''echo $KEYPASSWD | sagaosd tx slashing unjail --fees 500stake -y --from chainlet-operator-key'\'
+    log_and_execute_cmd $KUBECTL exec deployment/chainlet -n "$namespace" -- bash -c \''echo $KEYPASSWD | sagaosd tx slashing unjail --fees 300stake -y --from chainlet-operator-key'\'
 
     if [ $? -eq 0 ]; then
         success "Validator in namespace '$namespace' unjailed successfully"
     else
         error "Failed to unjail validator in namespace '$namespace'"
+        exit 1
+    fi
+}
+
+validator_vote() {
+    local identifier="$1"
+    local proposal_number="$2"
+
+    if [ -z "$identifier" ] || [ -z "$proposal_number" ]; then
+        error "vote command requires <identifier> and <proposal_number>"
+        echo ""
+        validator_print_usage
+        exit 1
+    fi
+
+    if [[ ! "$proposal_number" =~ ^[0-9]+$ ]]; then
+        error "proposal_number must be numeric: '$proposal_number'"
+        exit 1
+    fi
+
+    local namespace
+    namespace=$(get_namespace "$identifier")
+    log "Voting YES on proposal ${proposal_number} in namespace: $namespace"
+
+    # Execute exactly as requested; env vars expand inside the container.
+    log_and_execute_cmd $KUBECTL exec deployment/chainlet -n "$namespace" -- bash -c \''echo $KEYPASSWD | sagaosd tx gov vote '"$proposal_number"' yes --from $KEYNAME --fees 20stake -y'\'
+
+    if [ $? -eq 0 ]; then
+        success "Vote submitted successfully in namespace '$namespace'"
+    else
+        error "Failed to submit vote in namespace '$namespace'"
         exit 1
     fi
 }
@@ -217,6 +250,9 @@ handle_validator_command() {
             ;;
         status)
             validator_status "$1"
+            ;;
+        vote)
+            validator_vote "$1" "$2"
             ;;
         -h|--help|help|"")
             validator_print_usage

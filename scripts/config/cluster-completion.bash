@@ -23,7 +23,7 @@ _cluster_completion() {
     ssc_subcommands="status"
 
     # Validator subcommands
-    validator_subcommands="unjail status"
+    validator_subcommands="unjail status vote"
     
     # Available options
     opts="--kubeconfig -h --help"
@@ -116,7 +116,7 @@ _cluster_completion() {
             # Handle validator subcommand argument completion
             local validator_subcmd="${COMP_WORDS[$((main_cmd_index + 1))]}"
             case "${validator_subcmd}" in
-                unjail)
+                unjail|vote)
                     # For validator commands that need identifiers, complete with both namespaces and chainids
                     if [[ ${COMP_CWORD} -eq $((main_cmd_index + 2)) ]]; then
                         if command -v kubectl >/dev/null 2>&1; then
