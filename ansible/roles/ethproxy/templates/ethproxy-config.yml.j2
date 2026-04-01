@@ -1,0 +1,42 @@
+loglevel: "trace"
+node_rpc: "{{ ethproxy_config.node_rpc }}"
+node_json_rpc: "{{ ethproxy_config.node_json_rpc }}"
+chain_id: "{{ ethproxy_config.chain_id }}"
+account_address_prefix: "saga"
+json_rpc_request_timeout: "10s"
+server:
+  json_rpc:
+    address: "0.0.0.0:8545"
+    http_timeout: "30s"
+    http_idle_timeout: "60s"
+    rate_limit:
+      enabled: {{ ethproxy_config.rate_limit_enabled }}
+      ip_header: "True-Client-IP"
+      rate: 35_000
+      burst: 10_000_000
+    blacklist:
+      contracts:
+        enabled: false
+        addresses: []
+      accounts:
+        enabled: false
+        addresses: []
+    whitelist:
+      contracts:
+        enabled: false
+        addresses: []
+      accounts:
+{{ ethproxy_config.whitelist_accounts | to_nice_yaml | indent(8, true) }}
+  prometheus:
+    enabled: true
+    address: "0.0.0.0:9090"
+services:
+  fee_payer:
+    enabled: true
+    private_keys:
+      - "redacted"
+    broadcast_node_rpc: "{{ ethproxy_config.broadcast_node_rpc }}"
+    param_fetch_interval: "3s"
+    check_gas:
+      enabled: true
+      max_delta: 10
