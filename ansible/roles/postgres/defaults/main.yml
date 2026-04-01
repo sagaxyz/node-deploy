@@ -1,0 +1,24 @@
+# Postgres (disabled by default)
+postgres_enabled: false
+
+# Namespace + naming
+postgres_namespace: postgres
+
+# Image
+postgres_image: "postgres:17-alpine"
+
+# Auth / DB
+postgres_user: postgres
+postgres_password: ""  # required when postgres_enabled=true
+
+# Resources
+postgres_resources:
+  requests:
+    cpu: "2"
+    memory: "4Gi"
+  limits:
+    cpu: "4"
+    memory: "8Gi"
+
+# StatefulSet
+postgres_replicas: 1

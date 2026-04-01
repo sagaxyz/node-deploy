@@ -28,6 +28,7 @@
     - { role: controller, tags: [controller] }
     - { role: signer, tags: [signer], when: signer_enabled }
     - { role: ethproxy, tags: [ethproxy], when: ethproxy_enabled }
+    - { role: postgres, tags: [postgres], when: postgres_enabled }
 
 - name: Deploy Saga Pegasus stack (hosts config)
   hosts: all
@@ -59,3 +60,4 @@
     - { role: controller, tags: [controller] }
     - { role: signer, tags: [signer], when: signer_enabled }
     - { role: ethproxy, tags: [ethproxy], when: ethproxy_enabled }
+    - { role: postgres, tags: [postgres], when: postgres_enabled }
