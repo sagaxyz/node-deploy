@@ -1,0 +1,139 @@
+{{ if not $isHub }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-{{ .Name }}-jsonrpc"
+  namespace: "{{ .Namespace }}"
+  annotations:
+    saga.xyz/ingress-protocol: "jsonrpc"
+{% if cert_manager_enabled | bool %}
+    cert-manager.io/cluster-issuer: "%%% cert_manager_cluster_issuer_name %%%"
+{% endif %}
+spec:
+  ingressClassName: nginx
+{% if cert_manager_enabled | bool %}
+  tls:
+    - secretName: "{{ .Name }}-jsonrpc-tls"
+      hosts:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+        - "{{ .ChainletName }}-{{ .ChainIdNumber }}-1.jsonrpc.%%% url %%%"
+{% endfor %}
+{% endif %}
+  rules:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+    - host: "{{ .ChainletName }}-{{ .ChainIdNumber }}-1.jsonrpc.%%% url %%%"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chainlet
+                port:
+                  number: 8545
+{% endfor %}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-{{ .Name }}-ws"
+  namespace: "{{ .Namespace }}"
+  annotations:
+    nginx.org/websocket-services: "{{ .Name }}"
+    saga.xyz/ingress-protocol: "ws"
+{% if cert_manager_enabled | default(false) | bool %}
+    cert-manager.io/cluster-issuer: "%%% cert_manager_cluster_issuer_name %%%"
+{% endif %}
+spec:
+  ingressClassName: nginx
+{% if cert_manager_enabled | default(false) | bool %}
+  tls:
+    - secretName: "{{ .Name }}-ws-tls"
+      hosts:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+        - "{{ .ChainletName }}-{{ .ChainIdNumber }}-1.ws.%%% url %%%"
+{% endfor %}
+{% endif %}
+  rules:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+    - host: "{{ .ChainletName }}-{{ .ChainIdNumber }}-1.ws.%%% url %%%"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chainlet
+                port:
+                  number: 8546
+{% endfor %}
+{{ end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-{{ .Name }}-cosmos-jsonrpc"
+  namespace: "{{ .Namespace }}"
+  annotations:
+    saga.xyz/ingress-protocol: "jsonrpc"
+{% if cert_manager_enabled | default(false) | bool %}
+    cert-manager.io/cluster-issuer: "%%% cert_manager_cluster_issuer_name %%%"
+{% endif %}
+spec:
+  ingressClassName: nginx
+{% if cert_manager_enabled | default(false) | bool %}
+  tls:
+    - secretName: "{{ .Name }}-cosmos-jsonrpc-tls"
+      hosts:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+        - "{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% url %%%"
+{% endfor %}
+{% endif %}
+  rules:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+    - host: "{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosrpc.jsonrpc.%%% url %%%"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chainlet
+                port:
+                  number: 26657
+{% endfor %}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-{{ .Name }}-cosmos-api"
+  namespace: "{{ .Namespace }}"
+  annotations:
+    saga.xyz/ingress-protocol: "rest"
+{% if cert_manager_enabled | default(false) | bool %}
+    cert-manager.io/cluster-issuer: "%%% cert_manager_cluster_issuer_name %%%"
+{% endif %}
+spec:
+  ingressClassName: nginx
+{% if cert_manager_enabled | default(false) | bool %}
+  tls:
+    - secretName: "{{ .Name }}-cosmos-api-tls"
+      hosts:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+        - "{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosapi.jsonrpc.%%% url %%%"
+{% endfor %}
+{% endif %}
+  rules:
+{% for url in controller_chainlet_ingress_url_suffixes %}
+    - host: "{{ .ChainletName }}-{{ .ChainIdNumber }}-1-cosmosapi.jsonrpc.%%% url %%%"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chainlet
+                port:
+                  number: 1317
+{% endfor %}

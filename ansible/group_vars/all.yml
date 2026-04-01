@@ -19,5 +19,3 @@ statesync_rpc_domains:
 
 # Fluentd
 fluentd_enabled: false
-
-controller_ccv: false

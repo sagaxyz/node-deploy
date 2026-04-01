@@ -12,6 +12,11 @@ ssc_print_usage() {
     log ""
     log "SUBCOMMANDS:"
     log "  status      Show SSC sync status"
+    log "  shell       Open a shell in the SSC pod"
+    log ""
+    log "EXAMPLES:"
+    log "  cluster.sh ssc status"
+    log "  cluster.sh ssc shell"
 }
 
 ssc_status() {
@@ -35,6 +40,11 @@ ssc_status() {
     esac
 }
 
+ssc_shell() {
+    log "Opening shell in SSC pod (namespace: sagasrv-ssc)"
+    exec $KUBECTL exec -it deploy/ssc -n sagasrv-ssc -- bash
+}
+
 # Main ssc command handler
 handle_ssc_command() {
     local subcommand="$1"
@@ -42,6 +52,9 @@ handle_ssc_command() {
     case "$subcommand" in
         status)
             ssc_status
+            ;;
+        shell)
+            ssc_shell
             ;;
         -h|--help|help|"")
             ssc_print_usage

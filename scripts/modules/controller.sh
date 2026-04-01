@@ -15,12 +15,14 @@ controller_print_usage() {
     log "  up        Scale up the controller deployment"
     log "  restart   Restart controller pod"
     log "  logs      Follow controller logs"
+    log "  shell     Open a shell in the controller pod"
     log ""
     log "EXAMPLES:"
     log "  cluster.sh controller down"
     log "  cluster.sh controller up"
     log "  cluster.sh controller restart"
     log "  cluster.sh controller logs"
+    log "  cluster.sh controller shell"
 }
 
 controller_scale_down() {
@@ -64,6 +66,11 @@ controller_logs() {
     exec $KUBECTL logs -f deployment/controller -n sagasrv-controller
 }
 
+controller_shell() {
+    log "Opening shell in controller pod (namespace: sagasrv-controller)"
+    exec $KUBECTL exec -it deploy/controller -n sagasrv-controller -- sh
+}
+
 # Main controller command handler
 handle_controller_command() {
     local subcommand="$1"
@@ -80,6 +87,9 @@ handle_controller_command() {
             ;;
         logs)
             controller_logs
+            ;;
+        shell)
+            controller_shell
             ;;
         -h|--help|help|"")
             controller_print_usage

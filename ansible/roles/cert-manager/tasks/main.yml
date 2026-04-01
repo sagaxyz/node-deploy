@@ -1,0 +1,51 @@
+- name: Add jetstack Helm repo
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: https://charts.jetstack.io
+
+- name: Install/Upgrade cert-manager
+  kubernetes.core.helm:
+    release_name: cert-manager
+    chart_ref: jetstack/cert-manager
+    chart_version: "{{ cert_manager_chart_version }}"
+    release_namespace: "{{ cert_manager_namespace }}"
+    create_namespace: true
+    kubeconfig: "{{ kubeconfig_file }}"
+    wait: true
+    update_repo_cache: true
+    values:
+      installCRDs: true
+
+- name: Ensure cert-manager CRDs exist before creating resources
+  kubernetes.core.k8s_info:
+    api_version: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    name: certificates.cert-manager.io
+    kubeconfig: "{{ kubeconfig_file }}"
+  register: cert_manager_crd_certificates
+
+- name: Validate ClusterIssuer settings
+  ansible.builtin.assert:
+    that:
+      - cert_manager_acme_email is defined
+      - cert_manager_acme_email | length > 0
+
+- name: Create/Update ClusterIssuer (ACME HTTP-01)
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ kubeconfig_file }}"
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: "{{ cert_manager_cluster_issuer_name }}"
+      spec:
+        acme:
+          email: "{{ cert_manager_acme_email }}"
+          server: "{{ cert_manager_acme_server }}"
+          privateKeySecretRef:
+            name: "{{ cert_manager_private_key_secret_name }}"
+          solvers:
+            - http01:
+                ingress:
+                  class: "{{ cert_manager_ingress_class }}"
