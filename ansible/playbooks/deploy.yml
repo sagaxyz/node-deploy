@@ -23,9 +23,10 @@
   roles:
     - { role: metrics, tags: [metrics], when: metrics_enabled }
     - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
+    - { role: cert-manager, tags: [cert-manager], when: cert_manager_enabled }
     - { role: ssc, tags: [ssc] }
     - { role: controller, tags: [controller] }
-    - { role: signer, tags: [signer], when: signer_enabled | bool }
+    - { role: signer, tags: [signer], when: signer_enabled }
 
 - name: Deploy Saga Pegasus stack (hosts config)
   hosts: all
@@ -52,6 +53,7 @@
   roles:
     - { role: metrics, tags: [metrics], when: metrics_enabled }
     - { role: ingress-nginx, tags: [ingress-nginx], when: expose_p2p }
+    - { role: cert-manager, tags: [cert-manager], when: cert_manager_enabled }
     - { role: ssc, tags: [ssc] }
     - { role: controller, tags: [controller] }
-    - { role: signer, tags: [signer], when: signer_enabled | bool }
+    - { role: signer, tags: [signer], when: signer_enabled }

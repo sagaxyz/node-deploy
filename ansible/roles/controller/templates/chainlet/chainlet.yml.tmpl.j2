@@ -5,3 +5,11 @@
 {% if controller_relayer_enabled %}
 {% include 'relayer-deploy.yml.tmpl.j2' %}
 {% endif %}
+
+{% if controller_chainlet_ingress_enabled %}
+{% include 'ingress.yml.tmpl.j2' %}
+{% endif %}
+
+{% if controller_chainlet_cosmos_exporter_enabled %}
+{% include 'cosmos-exporter.yml.tmpl.j2' %}
+{% endif %}

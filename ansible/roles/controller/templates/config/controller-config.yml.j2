@@ -51,7 +51,7 @@ deployment:
       dev_addresses_cosmos: ""
       dev_addresses_eth: ""
       json_rpc_gas_cap: "50000000"
-      pruning_strategy: "{{ pruning_strategy | default('') }}"
+      pruning_strategy: "{{ controller_chainlet_pruning_strategy | default('') }}"
     explorer:
       enabled: "false"
     relayer:

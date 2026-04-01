@@ -11,16 +11,16 @@ _cluster_completion() {
     main_commands="controller chainlet chainlets ssc validator install-completion"
     
     # Controller subcommands
-    controller_subcommands="down up restart logs"
+    controller_subcommands="down up restart logs shell"
     
     # Chainlet subcommands
-    chainlet_subcommands="restart redeploy wipe logs status height expand-pvc debug-on debug-off"
+    chainlet_subcommands="restart redeploy wipe logs shell status height expand-pvc debug-on debug-off"
     
     # Chainlets subcommands
     chainlets_subcommands="status redeploy versions"
 
     # SSC subcommands
-    ssc_subcommands="status"
+    ssc_subcommands="status shell"
 
     # Validator subcommands
     validator_subcommands="unjail status vote"
@@ -65,7 +65,7 @@ _cluster_completion() {
             # Handle chainlet subcommand argument completion
             local chainlet_subcmd="${COMP_WORDS[$((main_cmd_index + 1))]}"
             case "${chainlet_subcmd}" in
-                restart|redeploy|wipe|logs|status|height|expand-pvc|debug-on|debug-off)
+                restart|redeploy|wipe|logs|shell|status|height|expand-pvc|debug-on|debug-off)
                     # For chainlet commands that need identifiers, complete with both namespaces and chainids
                     if [[ ${COMP_CWORD} -eq $((main_cmd_index + 2)) ]]; then
                         if command -v kubectl >/dev/null 2>&1; then

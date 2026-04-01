@@ -19,6 +19,7 @@ chainlet_print_usage() {
     log "  status <identifier>            Show sync status for a specific chainlet"
     log "  height <identifier>            Show current block height for a specific chainlet"
     log "  expand-pvc <identifier> [%]    Expand chainlet PVC by percentage (default: 20%)"
+    log "  shell <identifier>             Open a shell in the chainlet pod"
     log "  debug-on <identifier>          Override chainlet container command to ['sleep','infinity']"
     log "  debug-off <identifier>         Remove command override (defaults to image command)"
     log ""
@@ -37,6 +38,7 @@ chainlet_print_usage() {
     log "  cluster.sh chainlet height my_chain_id                 # Show block height using chain_id"
     log "  cluster.sh chainlet expand-pvc saga-my-chain           # Expand PVC by 20% (default)"
     log "  cluster.sh chainlet expand-pvc my_chain_id 50          # Expand PVC by 50%"
+    log "  cluster.sh chainlet shell saga-my-chain                # Open a shell in chainlet pod"
     log "  cluster.sh chainlet debug-on saga-my-chain             # Keep pod alive for debugging"
     log "  cluster.sh chainlet debug-off saga-my-chain            # Restore default command"
 }
@@ -144,6 +146,21 @@ chainlet_logs() {
 
     # Follow logs with exec (replaces current process)
     exec $KUBECTL logs -f deployment/chainlet -n "$namespace"
+}
+
+chainlet_shell() {
+    local identifier="$1"
+    if [ -z "$identifier" ]; then
+        error "shell command requires an identifier (namespace or chain_id)"
+        echo ""
+        chainlet_print_usage
+        exit 1
+    fi
+
+    local namespace
+    namespace=$(get_namespace "$identifier")
+    log "Opening shell in chainlet pod (namespace: $namespace)"
+    exec $KUBECTL exec -it deploy/chainlet -n "$namespace" -- bash
 }
 
 chainlet_status() {
@@ -357,6 +374,9 @@ handle_chainlet_command() {
             ;;
         logs)
             chainlet_logs "$1"
+            ;;
+        shell)
+            chainlet_shell "$1"
             ;;
         status)
             chainlet_status "$1"

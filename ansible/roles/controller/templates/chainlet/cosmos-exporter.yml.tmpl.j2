@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "cosmos-exporter"
+  namespace: "{{ .Namespace }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: "cosmos-exporter"
+  template:
+    metadata:
+      labels:
+        app: "cosmos-exporter"
+        chainId: "{{ .ChainId }}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9300"
+        saga.xyz/stack-version: "{{ .ChainletStackVersion }}"
+        saga.xyz/stack-name: "{{ .ChainletStackName }}"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      containers:
+        - name: cosmos-exporter
+          image: sagaxyz/cosmos-exporter:0.4.3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 80Mi
+            limits:
+              cpu: 20m
+              memory: 160Mi
+          imagePullPolicy: IfNotPresent
+          command:
+            - ./cosmos-exporter
+          args:
+            - --tendermint-rpc=tcp://chainlet:26657
+            - --node=chainlet:9090
+            - --denom="{{ .CoinDenom }}"
+            - --denom-coefficient=1
+            - --chain-id="{{ .ChainId }}"
+          ports:
+            - containerPort: 9300
+              protocol: TCP

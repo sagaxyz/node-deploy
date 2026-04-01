@@ -1,0 +1,11 @@
+cert_manager_enabled: false
+cert_manager_cluster_issuer_name: letsencrypt-prod
+
+cert_manager_namespace: cert-manager
+cert_manager_chart_version: "1.20.0"
+
+# Optionally create a ClusterIssuer (ACME HTTP-01 via ingress-nginx)
+cert_manager_acme_email: ""
+cert_manager_acme_server: https://acme-v02.api.letsencrypt.org/directory
+cert_manager_private_key_secret_name: letsencrypt-prod
+cert_manager_ingress_class: nginx

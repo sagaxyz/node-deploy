@@ -17,7 +17,7 @@ metrics_alertmanager_enabled: true
 # StateSync
 statesync_rpc_domains:
   - stsrv1.sagarpc.io
-  - st1.sagarpc.io
+  - stsrv1.sagarpc.io
 
 # SSC (disabled by default for testnet)
 ssc_chain_id: "ssc-testnet-3"
