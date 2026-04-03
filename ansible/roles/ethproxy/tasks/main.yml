@@ -1,0 +1,18 @@
+- name: Validate ethproxy_configs when enabled
+  ansible.builtin.assert:
+    that:
+      - ethproxy_configs is iterable
+      - ethproxy_configs is not string
+      - item.namespace is defined
+      - item.namespace | length > 0
+    fail_msg: "ethproxy_configs entries must include non-empty 'namespace'"
+  loop: "{{ ethproxy_configs }}"
+
+- name: Create ethproxy workloads and services
+  kubernetes.core.k8s:
+    state: present
+    template: templates/ethproxy-deploy.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"
+  vars:
+    ethproxy_config: "{{ item }}"
+  loop: "{{ ethproxy_configs }}"

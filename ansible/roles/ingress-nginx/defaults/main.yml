@@ -17,6 +17,9 @@ ingress_nginx_controller_resources:
 # Keep strict validation enabled (safe with controller v1.13.2+)
 ingress_nginx_controller_strict_validate_path_type: true
 
+# Trust X-Forwarded-* headers (real client IP/proto)
+ingress_nginx_use_forwarded_headers: true
+
 # Enable metrics
 ingress_nginx_metrics_enabled: "{{ metrics_enabled }}"
 ingress_nginx_metrics_service_monitor_enabled: "{{ metrics_enabled }}"

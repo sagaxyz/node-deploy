@@ -1,0 +1,208 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ postgres_namespace }}
+  labels:
+    name: {{ postgres_namespace }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ postgres_name }}-auth
+  namespace: {{ postgres_namespace }}
+type: Opaque
+stringData:
+  POSTGRES_USER: "{{ postgres_user }}"
+  POSTGRES_PASSWORD: "{{ postgres_password }}"
+  POSTGRES_DB: "{{ postgres_database }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ postgres_service_name }}
+  namespace: {{ postgres_namespace }}
+  labels:
+    app: {{ postgres_name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ postgres_name }}
+  ports:
+    - name: postgres
+      port: {{ postgres_port }}
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ postgres_name }}
+  namespace: {{ postgres_namespace }}
+  labels:
+    app: {{ postgres_name }}
+spec:
+  serviceName: {{ postgres_service_name }}
+  replicas: {{ postgres_replicas | default(1) }}
+  selector:
+    matchLabels:
+      app: {{ postgres_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ postgres_name }}
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ postgres_image }}"
+          args:
+            - "-c"
+            - "max_connections={{ postgres_max_connections }}"
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            # Store PGDATA in a subdir to avoid issues with volume root (e.g. lost+found)
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          envFrom:
+            - secretRef:
+                name: {{ postgres_name }}-auth
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["sh","-lc","pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h 127.0.0.1 -p {{ postgres_port }}"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 10
+          livenessProbe:
+            exec:
+              command: ["sh","-lc","pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h 127.0.0.1 -p {{ postgres_port }}"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources: {{ postgres_resources }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ postgres_storage_size }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ postgres_pgbouncer_name }}-config
+  namespace: {{ postgres_namespace }}
+data:
+  pgbouncer.ini: |
+    [databases]
+    * = host={{ postgres_service_name }} port={{ postgres_port }}
+
+    [pgbouncer]
+    listen_addr = 0.0.0.0
+    listen_port = {{ postgres_port }}
+
+    auth_type = md5
+    auth_file = /etc/pgbouncer/userlist.txt
+
+    pool_mode = {{ postgres_pgbouncer_pool_mode }}
+    max_client_conn = {{ postgres_pgbouncer_max_client_conn }}
+    default_pool_size = {{ postgres_pgbouncer_default_pool_size }}
+    reserve_pool_size = {{ postgres_pgbouncer_reserve_pool_size }}
+
+    ignore_startup_parameters = {{ postgres_pgbouncer_ignore_startup_parameters }}
+
+    log_connections = 1
+    log_disconnections = 1
+    stats_period = 60
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ postgres_pgbouncer_name }}-auth
+  namespace: {{ postgres_namespace }}
+type: Opaque
+stringData:
+  # Keep as plain text so PgBouncer can authenticate to Postgres
+  # even when Postgres requires SCRAM (PgBouncer can compute the SCRAM exchange).
+  userlist.txt: |
+    "{{ postgres_user }}" "{{ postgres_password }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ postgres_pgbouncer_service_name }}
+  namespace: {{ postgres_namespace }}
+  labels:
+    app: {{ postgres_pgbouncer_name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ postgres_pgbouncer_name }}
+  ports:
+    - name: postgres
+      port: {{ postgres_port }}
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ postgres_pgbouncer_name }}
+  namespace: {{ postgres_namespace }}
+  labels:
+    app: {{ postgres_pgbouncer_name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ postgres_pgbouncer_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ postgres_pgbouncer_name }}
+    spec:
+      containers:
+        - name: pgbouncer
+          image: "{{ postgres_pgbouncer_image }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: {{ postgres_port }}
+          command:
+            - pgbouncer
+          args:
+            - /etc/pgbouncer/pgbouncer.ini
+          readinessProbe:
+            tcpSocket:
+              port: postgres
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: postgres
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgbouncer
+          resources: {{ postgres_pgbouncer_resources }}
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ postgres_pgbouncer_name }}-config
+              - secret:
+                  name: {{ postgres_pgbouncer_name }}-auth

@@ -1,0 +1,142 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockscout-frontend
+  namespace: "{{ blockscout_namespace }}"
+spec:
+  replicas: {{ blockscout_frontend_replicas }}
+  selector:
+    matchLabels:
+      app: blockscout-frontend
+  template:
+    metadata:
+      labels:
+        app: blockscout-frontend
+    spec:
+      containers:
+        - name: blockscout-frontend
+          image: {{ blockscout_frontend_image }}
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "{{ blockscout_frontend_requests_memory }}"
+              cpu: "{{ blockscout_frontend_requests_cpu }}"
+            limits:
+              memory: "{{ blockscout_frontend_limits_memory }}"
+              cpu: "{{ blockscout_frontend_limits_cpu }}"
+          env:
+            - name: NEXT_PUBLIC_APP_HOST
+              value: "{{ blockscout_frontend_host }}"
+            - name: NEXT_PUBLIC_APP_PORT
+              value: "{{ blockscout_frontend_port }}"
+            - name: NEXT_PUBLIC_NETWORK_NAME
+              value: "{{ blockscout_chain_vanity_name }}"
+            - name: NEXT_PUBLIC_NETWORK_SHORT_NAME
+              value: "{{ blockscout_chain_vanity_name }}"
+            - name: NEXT_PUBLIC_NETWORK_ID
+              value: "{{ blockscout_chain_id_number }}"
+            - name: NEXT_PUBLIC_NETWORK_RPC_URL
+              value: "{{ blockscout_json_rpc }}"
+            - name: NEXT_PUBLIC_HIDE_INDEXING_ALERT_BLOCKS
+              value: "{{ blockscout_frontend_hide_indexing_alert_blocks }}"
+            - name: NEXT_PUBLIC_NETWORK_VERIFICATION_TYPE
+              value: "{{ blockscout_frontend_network_verification_type }}"
+            - name: NEXT_PUBLIC_IS_TESTNET
+              value: "{{ blockscout_is_testnet }}"
+            - name: NEXT_PUBLIC_API_HOST
+              value: "{{ blockscout_backend_host }}"
+            - name: NEXT_PUBLIC_HOMEPAGE_CHARTS
+              value: "{{ blockscout_frontend_homepage_charts }}"
+            - name: NEXT_PUBLIC_HOMEPAGE_STATS
+              value: "{{ blockscout_frontend_homepage_stats }}"
+            - name: NEXT_PUBLIC_HOMEPAGE_HERO_BANNER_CONFIG
+              value: "{{ blockscout_frontend_homepage_hero_banner_config }}"
+            - name: NEXT_PUBLIC_NETWORK_LOGO_DARK
+              value: "{{ blockscout_frontend_network_logo_dark }}"
+            - name: NEXT_PUBLIC_NETWORK_LOGO
+              value: "{{ blockscout_frontend_network_logo }}"
+            - name: NEXT_PUBLIC_NETWORK_ICON
+              value: "{{ blockscout_frontend_network_icon }}"
+            - name: NEXT_PUBLIC_NETWORK_ICON_DARK
+              value: "{{ blockscout_frontend_network_icon_dark }}"
+            - name: NEXT_PUBLIC_OTHER_LINKS
+              value: "{{ blockscout_frontend_other_links }}"
+            - name: NEXT_PUBLIC_FOOTER_LINKS
+              value: "{{ blockscout_frontend_footer_links }}"
+            - name: NEXT_PUBLIC_PROMOTE_BLOCKSCOUT_IN_TITLE
+              value: "{{ blockscout_frontend_promote_blockscout_in_title }}"
+            - name: NEXT_PUBLIC_OG_DESCRIPTION
+              value: "{{ blockscout_frontend_og_description }}"
+            - name: NEXT_PUBLIC_OG_IMAGE_URL
+              value: "{{ blockscout_frontend_og_image_url }}"
+            - name: NEXT_PUBLIC_GAS_TRACKER_ENABLED
+              value: "{{ blockscout_frontend_gas_tracker_enabled }}"
+            - name: NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID
+              value: "{{ blockscout_frontend_wallet_connect_project_id }}"
+            - name: NEXT_PUBLIC_AD_BANNER_PROVIDER
+              value: "{{ blockscout_frontend_ad_banner_provider }}"
+            - name: NEXT_PUBLIC_AD_TEXT_PROVIDER
+              value: "{{ blockscout_frontend_ad_text_provider }}"
+            - name: NEXT_PUBLIC_HAS_BEACON_CHAIN
+              value: "{{ blockscout_frontend_has_beacon_chain }}"
+            - name: NEXT_PUBLIC_MARKETPLACE_ENABLED
+              value: "{{ blockscout_frontend_marketplace_enabled }}"
+            - name: NEXT_PUBLIC_STATS_API_HOST
+              value: "{{ blockscout_frontend_stats_api_host }}"
+            - name: NEXT_PUBLIC_NETWORK_CURRENCY_NAME
+              value: "{{ blockscout_frontend_network_currency_name }}"
+            - name: NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL
+              value: "{{ blockscout_frontend_network_currency_symbol }}"
+            - name: NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS
+              value: "{{ blockscout_frontend_network_currency_decimals }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockscout-frontend
+  namespace: "{{ blockscout_namespace }}"
+  labels:
+    app: blockscout-frontend
+spec:
+  type: ClusterIP
+  ports:
+    - targetPort: 3000
+      port: 3000
+  selector:
+    app: blockscout-frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-blockscout-frontend
+  namespace: "{{ blockscout_namespace }}"
+  annotations:
+    saga.xyz/ingress-protocol: "explorer"
+{% if cert_manager_enabled %}
+    cert-manager.io/cluster-issuer: "{{ cert_manager_cluster_issuer_name }}"
+spec:
+  tls:
+    - secretName: "ingress-blockscout-frontend-tls"
+      hosts:
+{% for url in blockscout_hosts %}
+        - "{{ url }}"
+{% endfor %}
+{% else %}
+spec:
+{% endif %}
+  ingressClassName: nginx
+  rules:
+{% for url in blockscout_hosts %}
+    - host: "{{ url }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blockscout-frontend
+                port:
+                  number: 3000
+{% endfor %}

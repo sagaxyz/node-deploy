@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockscout-indexer
+  namespace: "{{ blockscout_namespace }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: "blockscout-indexer"
+  template:
+    metadata:
+      labels:
+        app: "blockscout-indexer"
+{% for k, v in blockscout_indexer_labels.items() %}
+        {{ k }}: "{{ v }}"
+{% endfor %}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4000"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      containers:
+        - name: blockscout-indexer
+          image: {{ blockscout_indexer_image }}
+          resources:
+            requests:
+              cpu: "{{ blockscout_indexer_requests_cpu }}"
+              memory: "{{ blockscout_indexer_requests_memory }}"
+            limits:
+              cpu: "{{ blockscout_indexer_limits_cpu }}"
+              memory: "{{ blockscout_indexer_limits_memory }}"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - bin/blockscout eval "Elixir.Explorer.ReleaseTasks.create_and_migrate()" && bin/blockscout start
+          ports:
+            - containerPort: 4000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: blockscout-shared-configmap
+          env:
+            - name: APPLICATION_MODE
+              value: "indexer"
+            - name: API_V1_READ_METHODS_DISABLED
+              value: "true"
+            - name: API_V1_WRITE_METHODS_DISABLED
+              value: "true"
+            - name: DISABLE_API
+              value: "true"
+            - name: DISABLE_WEBAPP
+              value: "true"
+            - name: API_V2_ENABLED
+              value: "false"
+            - name: DISABLE_INDEXER
+              value: "false"
+            - name: INDEXER_MEMORY_LIMIT
+              value: "{{ blockscout_indexer_memory_limit }}"
+            - name: ETHEREUM_JSONRPC_DEBUG_TRACE_TRANSACTION_TIMEOUT
+              value: "{{ blockscout_indexer_debug_trace_transaction_timeout }}"
+            - name: INDEXER_TX_ACTIONS_ENABLE
+              value: "{{ blockscout_indexer_tx_actions_enable }}"
+            - name: INDEXER_TX_ACTIONS_UNISWAP_V3_FACTORY_CONTRACT
+              value: "{{ blockscout_indexer_tx_actions_uniswap_v3_factory_contract }}"
+            - name: INDEXER_TX_ACTIONS_UNISWAP_V3_NFT_POSITION_MANAGER_CONTRACT
+              value: "{{ blockscout_indexer_tx_actions_uniswap_v3_nft_position_manager_contract }}"
+            - name: ETHEREUM_JSONRPC_DEBUG_TRACE_TRANSACTION_TIMEOUT
+              value: "{{ blockscout_indexer_debug_trace_transaction_timeout_fallback }}"
+            - name: FIRST_BLOCK
+              value: "{{ blockscout_indexer_first_block }}"
+            - name: TRACE_FIRST_BLOCK
+              value: "{{ blockscout_indexer_trace_first_block }}"
+{% if blockscout_indexer_trace_last_block is defined %}
+            - name: TRACE_LAST_BLOCK
+              value: "{{ blockscout_indexer_trace_last_block }}"
+{% endif %}
+            - name: ETHEREUM_JSONRPC_FALLBACK_TRACE_URL
+              value: "{{ blockscout_indexer_jsonrpc_fallback_trace_url }}"

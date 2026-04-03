@@ -2,6 +2,9 @@ controller:
   replicaCount: {{ ingress_nginx_controller_replicas }}
   strictValidatePathType: {{ ingress_nginx_controller_strict_validate_path_type | lower }}
   
+  config:
+    use-forwarded-headers: "{{ ingress_nginx_use_forwarded_headers | lower }}"
+
   resources:
 {{ ingress_nginx_controller_resources | to_nice_yaml | indent(4, true) }}
 

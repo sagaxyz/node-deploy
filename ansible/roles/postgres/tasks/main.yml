@@ -1,0 +1,17 @@
+- name: Validate postgres_password when enabled
+  ansible.builtin.assert:
+    that:
+      - postgres_password is defined
+      - postgres_password | length > 0
+      - postgres_storage_size is defined
+      - postgres_storage_size | length > 0
+    fail_msg: "Set postgres_password and postgres_storage_size when postgres_enabled=true"
+  when: postgres_enabled | bool
+
+- name: Deploy Postgres (single instance)
+  kubernetes.core.k8s:
+    state: present
+    template: templates/postgres.yml.j2
+    kubeconfig: "{{ kubeconfig_file }}"
+  when: postgres_enabled | bool
+

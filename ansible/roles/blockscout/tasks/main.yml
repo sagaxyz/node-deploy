@@ -1,0 +1,19 @@
+- name: Validate blockscout_configs when enabled
+  ansible.builtin.assert:
+    that:
+      - blockscout_configs is iterable
+      - blockscout_configs is not string
+      - blockscout_config.namespace is defined
+      - blockscout_config.namespace | length > 0
+      - blockscout_config.chain_id is defined
+      - blockscout_config.chain_id | length > 0
+    fail_msg: "blockscout_configs must be a list of config objects"
+  loop: "{{ blockscout_configs }}"
+  vars:
+    blockscout_config: "{{ item }}"
+
+- name: Deploy blockscout for each config
+  ansible.builtin.include_tasks: deploy-blockscout.yml
+  loop: "{{ blockscout_configs }}"
+  vars:
+    blockscout_config: "{{ item }}"

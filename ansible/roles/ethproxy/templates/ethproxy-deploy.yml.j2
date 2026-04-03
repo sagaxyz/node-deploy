@@ -1,0 +1,118 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ ethproxy_config.namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ethproxy-config
+  namespace: {{ ethproxy_config.namespace }}
+data:
+  ethproxy.yml: |
+{{ lookup('template', 'ethproxy-config.yml.j2') | indent(4, true) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ethproxy-secrets
+  namespace: {{ ethproxy_config.namespace }}
+stringData:
+  FEEPAYER_KEYS: "{{ ethproxy_config.feepayer_private_keys | join(',') }}"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ethproxy
+  namespace: {{ ethproxy_config.namespace }}
+spec:
+  replicas: {{ ethproxy_config.ethproxy_replicas | default(ethproxy_replicas) }}
+  selector:
+    matchLabels:
+      app: ethproxy
+  template:
+    metadata:
+      labels:
+        app: ethproxy
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+      - name: ethproxy
+        image: sagaxyz/ethproxy:{{ ethproxy_config.ethproxy_version | default(ethproxy_version) }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          INDEX=${HOSTNAME##*-}
+          export ETHPROXY_SERVICES_FEE_PAYER_PRIVATE_KEYS=$(echo $FEEPAYER_KEYS | tr ',' '\n' | sed -n "$((INDEX+1))p")
+          exec /usr/bin/ethproxy -config /etc/saga/ethproxy/ethproxy.yml
+        envFrom:
+        - secretRef:
+            name: ethproxy-secrets
+        ports:
+        - containerPort: 8545
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/saga/ethproxy
+        resources: {{ ethproxy_config.ethproxy_resources | default(ethproxy_resources) }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ethproxy-config
+          items:
+          - key: ethproxy.yml
+            path: ethproxy.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ethproxy
+  namespace: {{ ethproxy_config.namespace }}
+spec:
+  selector:
+    app: ethproxy
+  ports:
+  - port: 8545
+    targetPort: 8545
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-ethproxy-jsonrpc"
+  namespace: {{ ethproxy_config.namespace }}
+  annotations:
+    saga.xyz/ingress-protocol: "jsonrpc"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
+{% if cert_manager_enabled %}
+    cert-manager.io/cluster-issuer: "{{ cert_manager_cluster_issuer_name }}"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: "ingress-ethproxy-jsonrpc-tls"
+      hosts:
+{% for url in ethproxy_config.ethproxy_urls %}
+        - "{{ url }}"
+{% endfor %}
+{% else %}
+spec:
+  ingressClassName: nginx
+{% endif %}
+  rules:
+{% for url in ethproxy_config.ethproxy_urls %}
+    - host: "{{ url }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ethproxy
+                port:
+                  number: 8545
+{% endfor %}
