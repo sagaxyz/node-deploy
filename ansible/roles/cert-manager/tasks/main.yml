@@ -48,4 +48,4 @@
           solvers:
             - http01:
                 ingress:
-                  class: "{{ cert_manager_ingress_class }}"
+                  ingressClassName: "{{ cert_manager_ingress_class }}"

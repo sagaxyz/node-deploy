@@ -1,0 +1,69 @@
+- name: Deploy blockscout resources
+  vars:
+    blockscout_namespace: "{{ blockscout_config.namespace }}"
+    blockscout_chain_id: "{{ blockscout_config.chain_id }}"
+    blockscout_hosts: "{{ blockscout_config.hosts }}"
+    blockscout_host: "{{ blockscout_hosts[0] }}"
+    blockscout_frontend_replicas: "{{ blockscout_config.frontend_replicas }}"
+    blockscout_backend_replicas: "{{ blockscout_config.backend_replicas }}"
+    blockscout_json_rpc: "{{ blockscout_config.json_rpc }}"
+    blockscout_indexer_tx_actions_uniswap_v3_factory_contract: "{{ blockscout_config.indexer_tx_actions_uniswap_v3_factory_contract }}"
+    blockscout_indexer_tx_actions_uniswap_v3_nft_position_manager_contract: "{{ blockscout_config.indexer_tx_actions_uniswap_v3_nft_position_manager_contract }}"
+    blockscout_indexer_first_block: "{{ blockscout_config.indexer_first_block }}"
+    blockscout_indexer_trace_last_block: "{{ blockscout_config.indexer_trace_last_block }}"
+    blockscout_frontend_network_currency_name: "{{ blockscout_config.frontend_network_currency_name }}"
+    blockscout_frontend_network_currency_symbol: "{{ blockscout_config.frontend_network_currency_symbol }}"
+  block:
+    - name: Validate required blockscout config fields
+      ansible.builtin.assert:
+        that:
+          - blockscout_namespace is defined
+          - blockscout_namespace | length > 0
+          - blockscout_chain_id is defined
+          - blockscout_chain_id | length > 0
+          - blockscout_host is defined
+          - blockscout_host | length > 0
+          - blockscout_json_rpc is defined
+          - blockscout_json_rpc | length > 0
+        fail_msg: "Each blockscout_configs entry must define namespace/chain_id/host/json_rpc (either prefixed or short keys)."
+
+    - name: Ensure blockscout namespace exists
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig_file }}"
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ blockscout_namespace }}"
+
+    - name: Deploy blockscout common resources
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig_file }}"
+        template: "common.yml.j2"
+
+    - name: Deploy blockscout indexer deployment
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig_file }}"
+        template: "indexer.yml.j2"
+
+    - name: Deploy blockscout backend service
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig_file }}"
+        template: "backend.yml.j2"
+
+    - name: Deploy blockscout frontend service
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig_file }}"
+        template: "frontend.yml.j2"
+
+    - name: Deploy blockscout stats deployment
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig_file }}"
+        template: "stats.yml.j2"
+

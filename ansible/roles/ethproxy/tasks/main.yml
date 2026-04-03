@@ -7,7 +7,6 @@
       - item.namespace | length > 0
     fail_msg: "ethproxy_configs entries must include non-empty 'namespace'"
   loop: "{{ ethproxy_configs }}"
-  when: ethproxy_enabled
 
 - name: Create ethproxy workloads and services
   kubernetes.core.k8s:
@@ -17,4 +16,3 @@
   vars:
     ethproxy_config: "{{ item }}"
   loop: "{{ ethproxy_configs }}"
-  when: ethproxy_enabled

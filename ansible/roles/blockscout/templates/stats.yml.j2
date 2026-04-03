@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockscout-stats
+  namespace: "{{ blockscout_namespace }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blockscout-stats
+  template:
+    metadata:
+      labels:
+        app: blockscout-stats
+    spec:
+      containers:
+        - name: blockscout-stats
+          image: {{ blockscout_stats_image }}
+          ports:
+            - containerPort: 8051
+          env:
+            - name: STATS__SERVER__HTTP__ENABLED
+              value: "true"
+            - name: STATS__SERVER__HTTP__ADDR
+              value: "0.0.0.0:8051"
+            - name: STATS__SERVER__HTTP__MAX_BODY_SIZE
+              value: "2097152"
+            - name: STATS__DEFAULT_SCHEDULE
+              value: "0 0 1 * * * *"
+            - name: STATS__TRACING__ENABLED
+              value: "false"
+            - name: STATS__CREATE_DATABASE
+              value: "true"
+            - name: STATS__RUN_MIGRATIONS
+              value: "true"
+            - name: STATS__FORCE_UPDATE_ON_START
+              value: "{{ blockscout_stats_force_update_on_start }}"
+            - name: STATS__CONCURRENT_START_UPDATES
+              value: "{{ blockscout_stats_concurrent_start_updates }}"
+            - name: STATS__SERVER__HTTP__CORS__ENABLED
+              value: "{{ blockscout_stats_cors_enabled }}"
+            - name: STATS__SERVER__HTTP__CORS__ALLOWED_ORIGIN
+              value: "{{ blockscout_stats_cors_allowed_origin }}"
+            - name: STATS__SERVER__HTTP__CORS__ALLOWED_CREDENTIALS
+              value: "{{ blockscout_stats_cors_allowed_credentials }}"
+            - name: STATS__SERVER__HTTP__CORS__SEND_WILDCARD
+              value: "{{ blockscout_stats_cors_send_wildcard }}"
+            - name: STATS__METRICS__ENABLED
+              value: "false"
+            - name: STATS__METRICS__ADDR
+              value: "0.0.0.0:6060"
+            - name: STATS__METRICS__ROUTE
+              value: "/metrics"
+            - name: STATS__BLOCKSCOUT_API_URL
+              value: "http://blockscout-backend:4000"
+            - name: STATS__DB_URL
+              value: "{{ blockscout_stats_database_url }}"
+            - name: STATS__BLOCKSCOUT_DB_URL
+              value: "{{ blockscout_database_url }}"
+          resources:
+            requests:
+              memory: "{{ blockscout_stats_requests_memory }}"
+              cpu: "{{ blockscout_stats_requests_cpu }}"
+            limits:
+              memory: "{{ blockscout_stats_limits_memory }}"
+              cpu: "{{ blockscout_stats_limits_cpu }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockscout-stats
+  namespace: "{{ blockscout_namespace }}"
+  labels:
+    app: blockscout-stats
+spec:
+  type: ClusterIP
+  selector:
+    app: blockscout-stats
+  ports:
+    - targetPort: 8051
+      port: 8051
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-blockscout-stats
+  namespace: "{{ blockscout_namespace }}"
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+{% if cert_manager_enabled %}
+    cert-manager.io/cluster-issuer: "{{ cert_manager_cluster_issuer_name }}"
+spec:
+  tls:
+    - secretName: "ingress-blockscout-stats-tls"
+      hosts:
+{% for url in blockscout_hosts %}
+        - "stats-{{ url }}"
+{% endfor %}
+{% else %}
+spec:
+{% endif %}
+  ingressClassName: nginx
+  rules:
+{% for url in blockscout_hosts %}
+    - host: "stats-{{ url }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blockscout-stats
+                port:
+                  number: 8051
+{% endfor %}

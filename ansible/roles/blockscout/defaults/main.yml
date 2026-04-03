@@ -1,0 +1,121 @@
+# List of chainlets to manage blockscout resources for.
+# Each entry must contain:
+#   - namespace: <k8s namespace>
+#   - chain_id: <chain id>
+blockscout_configs: []
+
+# Common
+blockscout_chain_vanity_name: "{{ blockscout_chain_id.split('_')[0] }}"
+blockscout_chain_id_number: "{{ blockscout_chain_id.split('_')[1].split('-')[0] }}"
+blockscout_secret_key_base: ""
+blockscout_ecto_use_ssl: "false"
+blockscout_network: "Saga"
+blockscout_subnetwork: "{{ blockscout_chain_vanity_name }}"
+blockscout_disable_market: "true"
+blockscout_market_coin_fetcher_enabled: "false"
+blockscout_database_url: "postgresql://postgres:{{ postgres_password }}@postgres-pool.postgres.svc.cluster.local:5432/blockscout-{{ blockscout_chain_id }}"
+blockscout_database_ro_url: "{{ blockscout_database_url }}"
+blockscout_chainlet_namespace: "saga-{{ blockscout_chain_id.replace('_', '-') }}"
+blockscout_ethereum_jsonrpc_http_url: "http://chainlet.{{ blockscout_chainlet_namespace }}.svc.cluster.local:8545"
+blockscout_ethereum_jsonrpc_ws_url: "ws://chainlet.{{ blockscout_chainlet_namespace }}.svc.cluster.local:8546"
+blockscout_protocol: "https"
+blockscout_is_testnet: "{{ is_testnet }}"
+blockscout_ingress_class_name: "nginx"
+
+# DB connection pool tuning (Ecto / DBConnection)
+# These defaults are intentionally conservative for running multiple Blockscout
+# instances against a single Postgres via PgBouncer.
+blockscout_db_pool_size: "10"
+blockscout_db_pool_size_api: "10"
+blockscout_db_queue_target: "500ms"
+
+# Frontend
+blockscout_frontend_image: "sagaxyz/blockscout-frontend:2.7.1-amd" #"ghcr.io/blockscout/frontend:v2.3.5" # TODO change to "sagaxyz/blockscout-frontend:{{ blockscout_frontend_version }}"
+blockscout_frontend_replicas: 1
+blockscout_frontend_labels: {}
+blockscout_frontend_host: "{{ blockscout_host }}"
+blockscout_frontend_port: 443
+blockscout_frontend_requests_cpu: "1"
+blockscout_frontend_requests_memory: "4Gi"
+blockscout_frontend_limits_cpu: "2"
+blockscout_frontend_limits_memory: "8Gi"
+blockscout_frontend_hide_indexing_alert_blocks: "true"
+blockscout_frontend_network_verification_type: "validation"
+
+# Frontend (customizable public settings)
+blockscout_frontend_homepage_charts: "['daily_txs']"
+blockscout_frontend_homepage_stats: "['total_blocks', 'average_block_time', 'total_txs', 'wallet_addresses']"
+blockscout_frontend_homepage_hero_banner_config: "{ 'background': ['linear-gradient(280deg, rgba(255,255,255,1) 0%, rgba(102,235,227,1) 25%, rgba(36,226,215,1) 50%, rgba(22,136,129,1) 75%, rgba(25,9,51,1) 100%);']}"
+blockscout_frontend_network_logo_dark: "https://saga-public-assets.s3.amazonaws.com/blockscout/images/public_network_logo_dark.svg"
+blockscout_frontend_network_logo: "https://saga-public-assets.s3.amazonaws.com/blockscout/images/public_network_logo.svg"
+blockscout_frontend_network_icon: "https://saga-public-assets.s3.amazonaws.com/blockscout/images/public_network_icon.svg"
+blockscout_frontend_network_icon_dark: "https://saga-public-assets.s3.amazonaws.com/blockscout/images/public_network_icon_dark.svg"
+blockscout_frontend_other_links: "[{'url':'https://oku.trade/app/saga','text':'Oku'}, {'url':'https://app.squidrouter.com/?chains=ssc-1%2C5464&tokens=usaga%2C0xa19377761fed745723b90993988e04d641c2cffe','text':'Squid'}]"
+blockscout_frontend_footer_links: "https://saga-public-assets.s3.amazonaws.com/blockscout/configs/footer_links.json"
+blockscout_frontend_promote_blockscout_in_title: "false"
+blockscout_frontend_og_description: "Saga is more than your own dedicated and configurable blockchain - it’s a vibrant community where innovators are collaborating, learning, sharing, and creating the future together. Welcome to Saga, welcome to the Multiverse."
+blockscout_frontend_og_image_url: "https://saga-public-assets.s3.amazonaws.com/blockscout/images/public_og_image.jpg"
+blockscout_frontend_gas_tracker_enabled: "false"
+blockscout_frontend_ad_banner_provider: "none"
+blockscout_frontend_ad_text_provider: "none"
+blockscout_frontend_has_beacon_chain: "false"
+blockscout_frontend_marketplace_enabled: "false"
+blockscout_frontend_stats_api_host: "https://{{ blockscout_stats_host }}"
+blockscout_frontend_network_currency_decimals: "18"
+blockscout_frontend_wallet_connect_project_id: ""
+
+# Backend
+blockscout_backend_version: 9.3.2
+blockscout_backend_image: "ghcr.io/blockscout/blockscout:9.0.2" # TODO change to "sagaxyz/blockscout:{{ blockscout_backend_version }}"
+blockscout_backend_replicas: 1
+blockscout_backend_labels: {}
+blockscout_backend_host: "api-{{ blockscout_host }}"
+blockscout_backend_logo: "/images/logo.svg"
+blockscout_backend_footer_logo: "/images/footer_logo.svg"
+blockscout_backend_display_token_icons: "true"
+blockscout_backend_footer_chat_link: "https://discord.com/channels/950275843949736006"
+blockscout_backend_footer_github_link: "http://github.com/sagaxyz"
+blockscout_backend_requests_cpu: "1"
+blockscout_backend_requests_memory: "4Gi"
+blockscout_backend_limits_cpu: "2"
+blockscout_backend_limits_memory: "8Gi"
+blockscout_backend_api_rate_limit: "100"
+blockscout_backend_captcha_bypass_token: ""
+
+# Indexer
+blockscout_indexer_version: "{{ blockscout_backend_version}}"
+blockscout_indexer_image: "ghcr.io/blockscout/blockscout:9.0.2-indexer" # TODO change to "sagaxyz/blockscout:{{ blockscout_backend_version }}"
+blockscout_indexer_labels: {}
+blockscout_indexer_requests_cpu: "2"
+blockscout_indexer_requests_memory: "12Gi"
+blockscout_indexer_limits_cpu: "4"
+blockscout_indexer_limits_memory: "24Gi"
+blockscout_indexer_internal_transactions_tracer_type: "opcode"
+blockscout_indexer_memory_limit: "10Gi"
+blockscout_indexer_debug_trace_transaction_timeout: "15s"
+blockscout_indexer_tx_actions_enable: "true"
+blockscout_indexer_tx_actions_uniswap_v3_factory_contract: ""
+blockscout_indexer_tx_actions_uniswap_v3_nft_position_manager_contract: ""
+blockscout_indexer_debug_trace_transaction_timeout_fallback: "20s"
+blockscout_indexer_first_block: "0"
+blockscout_indexer_trace_first_block: "0"
+blockscout_indexer_jsonrpc_fallback_trace_url: ""
+
+# Stats
+blockscout_stats_version: 2.11.1
+blockscout_stats_image: "ghcr.io/blockscout/stats:v{{ blockscout_stats_version }}"
+blockscout_stats_labels: {}
+blockscout_stats_host: "stats-{{ blockscout_host }}"
+blockscout_stats_database_url: "{{ blockscout_database_url }}-stats"
+blockscout_stats_concurrent_start_updates: "1"
+blockscout_stats_force_update_on_start: "false"
+
+# CORS for stats-server (frontend fetches stats from a different host)
+blockscout_stats_cors_enabled: "true"
+blockscout_stats_cors_allowed_origin: "*"
+blockscout_stats_cors_allowed_credentials: "false"
+blockscout_stats_cors_send_wildcard: "false"
+blockscout_stats_requests_cpu: "100m"
+blockscout_stats_requests_memory: "100Mi"
+blockscout_stats_limits_cpu: "200m"
+blockscout_stats_limits_memory: "200Mi"

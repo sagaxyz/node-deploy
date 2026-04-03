@@ -1,0 +1,127 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockscout-backend
+  namespace: "{{ blockscout_namespace }}"
+spec:
+  replicas: {{ blockscout_backend_replicas }}
+  selector:
+    matchLabels:
+      app: blockscout-backend
+  template:
+    metadata:
+      labels:
+        app: blockscout-backend
+    spec:
+      containers:
+        - name: blockscout-backend
+          image: {{ blockscout_backend_image }}
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - bin/blockscout start
+          ports:
+            - containerPort: 4000
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 4000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+            successThreshold: 1
+          envFrom:
+            - configMapRef:
+                name: blockscout-shared-configmap
+          env:
+            - name: APPLICATION_MODE
+              value: "api"
+            - name: DISABLE_INDEXER
+              value: "true"
+            - name: BLOCKSCOUT_HOST
+              value: "{{ blockscout_backend_host }}"
+            - name: BLOCKSCOUT_PROTOCOL
+              value: "{{ blockscout_protocol  }}"
+            - name: WEBAPP_URL
+              value: "{{ blockscout_protocol }}://{{ blockscout_frontend_host}}"
+            - name: LOGO
+              value: "{{ blockscout_backend_logo }}"
+            - name: FOOTER_LOGO
+              value: "{{ blockscout_backend_footer_logo }}"
+            - name: SHOW_TESTNET_LABEL
+              value: "{{ blockscout_is_testnet }}"
+            - name: BLOCKSCOUT_VERSION
+              value: "{{ blockscout_backend_version }}"
+            - name: FOOTER_CHAT_LINK
+              value: "{{ blockscout_backend_footer_chat_link }}"
+            - name: FOOTER_GITHUB_LINK
+              value: "{{ blockscout_backend_footer_github_link }}"
+            - name: DISPLAY_TOKEN_ICONS
+              value: "{{ blockscout_backend_display_token_icons }}"
+            - name: API_RATE_LIMIT
+              value: "{{ blockscout_backend_api_rate_limit }}"
+            - name: RE_CAPTCHA_BYPASS_TOKEN
+              value: "{{ blockscout_backend_captcha_bypass_token }}"
+          resources:
+            requests:
+              cpu: "{{ blockscout_backend_requests_cpu }}"
+              memory: "{{ blockscout_backend_requests_memory }}"
+            limits:
+              cpu: "{{ blockscout_backend_limits_cpu }}"
+              memory: "{{ blockscout_backend_limits_memory }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockscout-backend
+  namespace: "{{ blockscout_namespace }}"
+  labels:
+    app: blockscout-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: blockscout-backend
+  ports:
+    - targetPort: 4000
+      port: 4000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-blockscout-backend
+  namespace: "{{ blockscout_namespace }}"
+  annotations:
+    nginx.org/websocket-services: blockscout-backend
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
+{% if cert_manager_enabled %}
+    cert-manager.io/cluster-issuer: "{{ cert_manager_cluster_issuer_name }}"
+spec:
+  tls:
+    - secretName: "ingress-blockscout-backend-tls"
+      hosts:
+{% for url in blockscout_hosts %}
+        - "api-{{ url }}"
+{% endfor %}
+{% else %}
+spec:
+{% endif %}
+  ingressClassName: {{ blockscout_ingress_class_name }}
+  rules:
+{% for url in blockscout_hosts %}
+    - host: "api-{{ url }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blockscout-backend
+                port:
+                  number: 4000
+{% endfor %}

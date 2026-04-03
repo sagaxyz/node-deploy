@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blockscout-shared-configmap
+  namespace: "{{ blockscout_namespace }}"
+data:
+  DATABASE_URL: "{{ blockscout_database_url }}"
+  POOL_SIZE: "{{ blockscout_db_pool_size }}"
+  POOL_SIZE_API: "{{ blockscout_db_pool_size_api }}"
+  DATABASE_QUEUE_TARGET: "{{ blockscout_db_queue_target }}"
+  ETHEREUM_JSONRPC_HTTP_URL: "{{ blockscout_ethereum_jsonrpc_http_url }}"
+  ETHEREUM_JSONRPC_WS_URL: "{{ blockscout_ethereum_jsonrpc_ws_url }}"
+  SECRET_KEY_BASE: "{{ blockscout_secret_key_base }}"
+  ECTO_USE_SSL: "{{ blockscout_ecto_use_ssl }}"
+  CHAIN_ID: "{{ blockscout_chain_id_number }}"
+  JSON_RPC: "{{ blockscout_json_rpc }}"
+  NETWORK: "{{ blockscout_network }}"
+  SUBNETWORK: "{{ blockscout_subnetwork }}"
+  INDEXER_INTERNAL_TRANSACTIONS_TRACER_TYPE: "{{ blockscout_indexer_internal_transactions_tracer_type }}"
+  DISABLE_MARKET: "{{ blockscout_disable_market }}"
+  MARKET_COIN_FETCHER_ENABLED: "{{ blockscout_market_coin_fetcher_enabled }}"

@@ -85,6 +85,10 @@ metadata:
   namespace: {{ ethproxy_config.namespace }}
   annotations:
     saga.xyz/ingress-protocol: "jsonrpc"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
 {% if cert_manager_enabled %}
     cert-manager.io/cluster-issuer: "{{ cert_manager_cluster_issuer_name }}"
 spec:

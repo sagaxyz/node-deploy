@@ -3,6 +3,9 @@ postgres_enabled: false
 
 # Namespace + naming
 postgres_namespace: postgres
+postgres_name: postgres
+postgres_service_name: postgres
+postgres_port: 5432
 
 # Image
 postgres_image: "postgres:17-alpine"
@@ -10,6 +13,28 @@ postgres_image: "postgres:17-alpine"
 # Auth / DB
 postgres_user: postgres
 postgres_password: ""  # required when postgres_enabled=true
+postgres_database: postgres
+
+# Postgres settings
+postgres_max_connections: 500
+
+# PgBouncer (always deployed with this role)
+postgres_pgbouncer_name: pgbouncer
+postgres_pgbouncer_service_name: postgres-pool
+postgres_pgbouncer_image: "edoburu/pgbouncer:v1.25.1-p0"
+postgres_pgbouncer_pool_mode: session
+postgres_pgbouncer_max_client_conn: 2000
+postgres_pgbouncer_default_pool_size: 100
+postgres_pgbouncer_reserve_pool_size: 20
+# Common Postgrex/Ecto startup parameters that PgBouncer can safely ignore.
+postgres_pgbouncer_ignore_startup_parameters: "extra_float_digits,options,search_path"
+postgres_pgbouncer_resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
 
 # Resources
 postgres_resources:
