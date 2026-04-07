@@ -12,6 +12,8 @@ controller:
     enabled: {{ ingress_nginx_metrics_enabled | lower }}
     serviceMonitor:
       enabled: {{ ingress_nginx_metrics_service_monitor_enabled | lower }}
+      additionalLabels:
+        release: kube-prometheus-stack
 
   service:
     enabled: false
