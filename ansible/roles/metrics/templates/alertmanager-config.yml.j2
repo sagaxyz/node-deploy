@@ -45,7 +45,6 @@ receivers:
 {% if channel.type == 'slack' %}
     slack_configs:
       - api_url: '{{ channel.api_url }}'
-        channel: '{{ channel.channel }}'
         title: '{{ channel.title }}'
         text: '{{ channel.text }}'
         send_resolved: true
@@ -78,7 +77,6 @@ receivers:
 {% if channel.type == 'slack' %}
     slack_configs:
       - api_url: '{{ channel.api_url }}'
-        channel: '{{ channel.channel }}'
         title: '{{ channel.title }}'
         text: '{{ channel.text }}'
         send_resolved: true
@@ -107,7 +105,6 @@ receivers:
 {% if channel.type == 'slack' %}
     slack_configs:
       - api_url: '{{ channel.api_url }}'
-        channel: '{{ channel.channel }}'
         title: '{{ channel.title }}'
         text: '{{ channel.text }}'
         send_resolved: true

@@ -27,7 +27,7 @@ metadata:
   name: ethproxy
   namespace: {{ ethproxy_config.namespace }}
 spec:
-  replicas: {{ ethproxy_config.ethproxy_replicas | default(ethproxy_replicas) }}
+  replicas: {{ ethproxy_config.replicas | default(ethproxy_replicas) }}
   selector:
     matchLabels:
       app: ethproxy
@@ -116,3 +116,230 @@ spec:
                 port:
                   number: 8545
 {% endfor %}
+{% if ethproxy_config.fullnodes.enabled %}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chainlet-env
+  namespace: {{ ethproxy_config.namespace }}
+data:
+  CHAIN_ID: {{ ethproxy_config.chain_id }}
+  GENESIS_URL: "{{ ethproxy_config.fullnodes.genesis_url }}"
+  PEERS: "{{ ethproxy_config.fullnodes.peers }}"
+  DENOM: "{{ ethproxy_config.fullnodes.denom }}"
+  LOG_LEVEL: "info"
+  SYNC_RPC: "{{ ethproxy_config.fullnodes.sync_rpc_urls | join(',') }}"
+  MONIKER: "{{ moniker }}"
+  PRUNING: "{{ ethproxy_config.fullnodes.pruning_strategy }}"
+  OPTS: "{{ ethproxy_config.fullnodes.opts | default('') }}"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chainlet-rw
+  namespace: {{ ethproxy_config.namespace }}
+spec:
+  replicas: {{ ethproxy_config.fullnodes.replicas_rw }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chainlet-rw
+  template:
+    metadata:
+      labels:
+        app: chainlet-rw
+        chainId: "{{ ethproxy_config.chain_id }}-rw"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "26660"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      containers:
+        - image: "sagaxyz/sagaos:{{ ethproxy_config.fullnodes.version }}"
+          name: chainlet
+          command: ["bash", "/root/start-fullnode.sh"]
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: chainlet-env
+          ports:
+            - containerPort: 26657
+            - containerPort: 26656
+            - containerPort: 9090
+            - containerPort: 1317
+            - containerPort: 8545
+            - containerPort: 8546
+            - containerPort: 26660
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - sagaosd status | jq -r '(.SyncInfo // .sync_info) | .catching_up' | grep false
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 4
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
+          volumeMounts:
+            - name: data-volume
+              mountPath: "/root/.sagaosd/data"
+            - name: config-volume
+              mountPath: "/root/.sagaosd/config"
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chainlet-ro
+  namespace: {{ ethproxy_config.namespace }}
+spec:
+  replicas: {{ ethproxy_config.fullnodes.replicas_ro }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chainlet-ro
+  template:
+    metadata:
+      labels:
+        app: chainlet-ro
+        chainId: "{{ ethproxy_config.chain_id }}-ro"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "26660"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      containers:
+        - image: "sagaxyz/sagaos:{{ ethproxy_config.fullnodes.version }}"
+          name: chainlet
+          command: ["bash", "/root/start-fullnode.sh"]
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: chainlet-env
+          ports:
+            - containerPort: 26657
+            - containerPort: 26656
+            - containerPort: 9090
+            - containerPort: 1317
+            - containerPort: 8545
+            - containerPort: 8546
+            - containerPort: 26660
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - sagaosd status | jq -r '(.SyncInfo // .sync_info) | .catching_up' | grep false
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 4
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
+          volumeMounts:
+            - name: data-volume
+              mountPath: "/root/.sagaosd/data"
+            - name: config-volume
+              mountPath: "/root/.sagaosd/config"
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "chainlet-ro"
+  namespace: {{ ethproxy_config.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: "chainlet-ro"
+  ports:
+    - name: tendermintrpc
+      port: 26657
+      targetPort: 26657
+    - name: tendermintrpc-p2p
+      port: 26656
+      targetPort: 26656
+    - name: cosmosgrpc
+      port: 9090
+      targetPort: 9090
+    - name: tendermintlcd
+      port: 1317
+      targetPort: 1317
+    - name: evmjsonrpc
+      port: 8545
+      targetPort: 8545
+    - name: evmws
+      port: 8546
+      targetPort: 8546
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "chainlet-rw"
+  namespace: {{ ethproxy_config.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: "chainlet-rw"
+  ports:
+    - name: tendermintrpc
+      port: 26657
+      targetPort: 26657
+    - name: tendermintrpc-p2p
+      port: 26656
+      targetPort: 26656
+    - name: cosmosgrpc
+      port: 9090
+      targetPort: 9090
+    - name: tendermintlcd
+      port: 1317
+      targetPort: 1317
+    - name: evmjsonrpc
+      port: 8545
+      targetPort: 8545
+    - name: evmws
+      port: 8546
+      targetPort: 8546
+{% endif %}
