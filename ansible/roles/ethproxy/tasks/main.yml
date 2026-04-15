@@ -16,3 +16,22 @@
   vars:
     ethproxy_config: "{{ item }}"
   loop: "{{ ethproxy_configs }}"
+  register: ethproxy_deploy_results
+
+- name: Restart ethproxy statefulset if the template changed
+  kubernetes.core.k8s:
+    state: patched
+    kind: StatefulSet
+    namespace: "{{ ethproxy_config.namespace }}"
+    name: ethproxy
+    kubeconfig: "{{ kubeconfig_file }}"
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/restartedAt: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+  vars:
+    ethproxy_config: "{{ item.item }}"
+  when: item.changed
+  loop: "{{ ethproxy_deploy_results.results }}"
