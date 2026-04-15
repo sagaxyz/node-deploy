@@ -53,8 +53,8 @@ prometheus:
 
 alertmanager:
   enabled: {{ metrics_alertmanager_enabled | bool | lower }}
-{% if metrics_alertmanager_storage_class or metrics_alertmanager_config_enabled %}
   alertmanagerSpec:
+    externalUrl: {{ metrics_alertmanager_external_url }}
 {% if metrics_alertmanager_storage_class %}
     storage:
       volumeClaimTemplate:
@@ -68,7 +68,6 @@ alertmanager:
 {% endif %}
 {% if metrics_alertmanager_config_enabled %}
     configSecret: alertmanager-config
-{% endif %}
 {% endif %}
 
 # Disable ServiceMonitors for components that don't expose metrics
