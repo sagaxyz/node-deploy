@@ -28,6 +28,7 @@ metrics_alertmanager_storage_size: 2Gi
 # AlertManager notification channels configuration
 # Set to false to disable AlertManager configuration (uses default config)
 metrics_alertmanager_config_enabled: false
+metrics_alertmanager_external_url: "http://kube-prometheus-stack-alertmanager.sagasrv-metrics:9093"
 
 # Global AlertManager settings
 metrics_alertmanager_global: {}
